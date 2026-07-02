@@ -1,6 +1,5 @@
 import threading
 import asyncio
-from backend.main import parse_and_create_findings
 from core.plugin_manager import plugin_manager
 from models import DecisionLog, Finding, Evidence
 from database import SessionLocal
@@ -10,6 +9,9 @@ class AgentRuntime:
         self.active_tasks = {}
 
     def execute_task(self, project_id, target, tool_name):
+        # Lazy import to avoid circular dependency
+        from main import parse_and_create_findings
+        
         db = SessionLocal()
         try:
             log_entry = DecisionLog(
@@ -22,7 +24,6 @@ class AgentRuntime:
             if not plugin:
                 scan_result = {"status": "Failed", "error": "Plugin not found"}
             else:
-                # Fix: Proper async event loop for background thread
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 scan_result = loop.run_until_complete(plugin.execute(target))
