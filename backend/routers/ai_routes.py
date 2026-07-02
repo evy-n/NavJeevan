@@ -14,11 +14,17 @@ def generate_ai_plan(project_id: int, db: Session = Depends(get_db)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project: raise HTTPException(status_code=404, detail="Project not found")
     
-    tool_plan = ai_gateway.get_autonomous_plan(project.name, "target.com")
+    # BUG 3 FIX: Fetch first asset, fallback to project name
+    asset = db.query(models.Asset).filter(models.Asset.project_id == project_id).first()
+    target_for_plan = asset.name if asset else project.name
+    
+    tool_plan = ai_gateway.get_autonomous_plan(project.name, target_for_plan)
+    
     db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == "Pending").delete()
     
     for tool_name in tool_plan:
-        db.add(models.Task(project_id=project_id, name=f"Run {tool_name.upper()} Scan", status="Pending", priority="High"))
+        # Also saving tool_name here for consistency
+        db.add(models.Task(project_id=project_id, name=f"Run {tool_name.upper()} Scan", tool_name=tool_name, status="Pending", priority="High"))
     db.commit()
     
     assets = db.query(models.Asset).filter(models.Asset.project_id == project_id).all()

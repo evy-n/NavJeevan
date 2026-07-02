@@ -10,7 +10,7 @@ class AgentRuntime:
 
     def execute_task(self, project_id, target, tool_name):
         # Lazy import to avoid circular dependency
-        from main import parse_and_create_findings
+        from services.scan_service import parse_and_create_findings
         
         db = SessionLocal()
         try:
@@ -24,6 +24,7 @@ class AgentRuntime:
             if not plugin:
                 scan_result = {"status": "Failed", "error": "Plugin not found"}
             else:
+                # BUG 1 FIX: Proper async event loop execution
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 scan_result = loop.run_until_complete(plugin.execute(target))

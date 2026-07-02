@@ -19,7 +19,7 @@ class BasePlugin(ABC):
             if sys.platform == 'win32':
                 creation_flags = subprocess.CREATE_NO_WINDOW
                 
-            # Fix: shell=False aur command_list directly pass kiya
+            # BUG 2 FIX: shell=False to prevent Command Injection. Pass list directly.
             process = subprocess.Popen(
                 command_list,
                 stdout=subprocess.PIPE,
@@ -35,7 +35,6 @@ class BasePlugin(ABC):
             output_lines = []
             loop = asyncio.get_event_loop()
             
-            # Feature: 5 minute timeout protection
             def kill_proc(p):
                 if p.poll() is None:
                     p.kill()

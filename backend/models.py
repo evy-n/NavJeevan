@@ -28,6 +28,8 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"))
     name = Column(String, index=True)
+    # BUG 4 FIX: Added tool_name column for robust tool extraction
+    tool_name = Column(String, nullable=True)
     status = Column(String, default="Pending")
     priority = Column(String, default="Medium")
     project = relationship("Project", back_populates="tasks")
@@ -76,7 +78,6 @@ class Setting(Base):
     key = Column(String, primary_key=True, index=True)
     value = Column(String)
 
-# Naya Table: Agent Messages (Multi-Agent Collaboration)
 class AgentMessage(Base):
     __tablename__ = "agent_messages"
     id = Column(Integer, primary_key=True, index=True)

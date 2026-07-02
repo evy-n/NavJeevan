@@ -49,13 +49,15 @@ def autonomous_worker(project_id: int, target: str):
         
         db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == "Pending").delete()
         for tool_name in tool_plan:
-            db.add(models.Task(project_id=project_id, name=f"Run {tool_name.upper()} Scan", status="Pending", priority="High"))
+            # BUG 4 FIX: Store tool_name directly in DB
+            db.add(models.Task(project_id=project_id, name=f"Run {tool_name.upper()} Scan", tool_name=tool_name, status="Pending", priority="High"))
         db.commit()
         
         pending_tasks = db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == "Pending").all()
         
         for task in pending_tasks:
-            tool_name = task.name.replace("Run ", "").replace(" Scan", "").lower()
+            # BUG 4 FIX: Use task.tool_name instead of string replace
+            tool_name = task.tool_name
             task.status = "Running"; db.commit()
             
             log_entry = DecisionLog(project_id=project_id, agent_name="Workflow Engine", decision=f"Execute {tool_name.upper()} on {target}", reason="Autonomous State Machine", result_status="Running")
