@@ -42,54 +42,34 @@ def parse_and_create_findings(db, project_id, target, tool, output_text):
     return findings_count
 
 def autonomous_worker(project_id: int, target: str):
+    from agents.orchestrator import orchestrator
+    from database import SessionLocal
+    import models
+    
     db = SessionLocal()
     try:
-        project = db.query(models.Project).filter(models.Project.id == project_id).first()
-        tool_plan = ai_gateway.get_autonomous_plan(project.name, target)
+        project = db.query(models.Project).filter(
+            models.Project.id == project_id
+        ).first()
         
-        db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == "Pending").delete()
-        for tool_name in tool_plan:
-            # BUG 4 FIX: Store tool_name directly in DB
-            db.add(models.Task(project_id=project_id, name=f"Run {tool_name.upper()} Scan", tool_name=tool_name, status="Pending", priority="High"))
-        db.commit()
-        
-        pending_tasks = db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == "Pending").all()
-        
-        for task in pending_tasks:
-            # BUG 4 FIX: Use task.tool_name instead of string replace
-            tool_name = task.tool_name
-            task.status = "Running"; db.commit()
-            
-            log_entry = DecisionLog(project_id=project_id, agent_name="Workflow Engine", decision=f"Execute {tool_name.upper()} on {target}", reason="Autonomous State Machine", result_status="Running")
-            db.add(log_entry); db.commit(); db.refresh(log_entry)
-            
-            plugin = plugin_manager.get_plugin(tool_name)
-            if plugin:
-                max_retries = 1
-                retry_count = 0
-                while retry_count <= max_retries:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    scan_result = loop.run_until_complete(plugin.execute(target))
-                    loop.close()
-                    
-                    if scan_result["status"] == "Failed" and retry_count < max_retries:
-                        retry_count += 1
-                        db.add(DecisionLog(project_id=project_id, agent_name="Workflow Engine", decision=f"Retry {tool_name.upper()} on {target}", reason="Previous attempt failed", result_status="Running"))
-                        db.commit()
-                        time.sleep(3)
-                        continue
-                    break
-                
-                if scan_result["status"] == "Completed" and scan_result.get("output"):
-                    parse_and_create_findings(db, project_id, target, tool_name, scan_result["output"])
-                    task.status = "Completed"; log_entry.result_status = "Completed"
-                else:
-                    task.status = "Failed"; log_entry.result_status = scan_result["status"]
-            else:
-                task.status = "Failed"; log_entry.result_status = "Failed"
-            db.commit()
+        orchestrator.run_full_autonomous_scan(
+            db=db,
+            project_id=project_id,
+            target=target,
+            project=project
+        )
     except Exception as e:
-        print(f"Workflow Engine Error: {e}")
+        from models import DecisionLog
+        from datetime import datetime
+        error_log = DecisionLog(
+            project_id=project_id,
+            agent_name="Orchestrator",
+            decision="Autonomous scan failed",
+            reason=str(e),
+            result_status="Failed",
+            timestamp=datetime.utcnow()
+        )
+        db.add(error_log)
+        db.commit()
     finally:
         db.close()

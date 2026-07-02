@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-import os, shutil
+import os, shutil, json
 import models
 from database import get_db, SessionLocal
 from core.dependencies import get_current_user, validate_target
 from ai_engine import ai_gateway
-from models import Finding, Evidence, DecisionLog, AgentMessage
+from models import Finding, Evidence, DecisionLog, AgentMessage, KnowledgeBase
 
 router = APIRouter(prefix="/api", tags=["AI & Browser"])
 
@@ -14,7 +14,6 @@ def generate_ai_plan(project_id: int, db: Session = Depends(get_db)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project: raise HTTPException(status_code=404, detail="Project not found")
     
-    # Fetch first asset, fallback to project name
     asset = db.query(models.Asset).filter(models.Asset.project_id == project_id).first()
     target_for_plan = asset.name if asset else project.name
     
@@ -41,6 +40,98 @@ def correlate_project_findings(project_id: int, db: Session = Depends(get_db)):
     correlation_report = ai_gateway.correlate_findings(project.name, findings_list)
     return {"status": "success", "correlation_report": correlation_report}
 
+# ==========================================
+# ENDPOINT 1: OWASP CATEGORIZER
+# ==========================================
+@router.get("/audit/owasp/{project_id}")
+def owasp_audit(project_id: int, db: Session = Depends(get_db)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not project: raise HTTPException(status_code=404, detail="Project not found")
+    findings = db.query(Finding).filter(Finding.project_id == project_id).all()
+    if not findings: raise HTTPException(status_code=400, detail="No findings to audit.")
+    
+    if not ai_gateway.client:
+        raise HTTPException(status_code=500, detail="AI Not Configured")
+
+    owasp_map = {
+        "A01": "Broken Access Control", "A02": "Cryptographic Failures", "A03": "Injection",
+        "A04": "Insecure Design", "A05": "Security Misconfiguration", "A06": "Vulnerable/Outdated Components",
+        "A07": "Authentication Failures", "A08": "Software Integrity Failures", 
+        "A09": "Security Logging Failures", "A10": "SSRF", "N/A": "Not Applicable"
+    }
+    
+    owasp_breakdown = {}
+    total_points = 0
+    points_map = {"Critical": 10, "High": 7, "Medium": 4, "Low": 1, "Info": 0}
+    
+    for f in findings:
+        prompt = f"""
+        You are an OWASP Top 10 specialist.
+        Finding: {f.title}
+        Tool: {f.tool}
+        Severity: {f.severity}
+        Classify into ONE OWASP Top 10 (2021) category code (A01-A10 or N/A).
+        Return ONLY the code (e.g., A03).
+        """
+        response = ai_gateway.client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant"
+        )
+        cat_code = response.choices[0].message.content.strip()
+        if cat_code not in owasp_map: cat_code = "N/A"
+        
+        cat_name = f"{cat_code}-{owasp_map[cat_code]}"
+        if cat_name not in owasp_breakdown:
+            owasp_breakdown[cat_name] = {"count": 0, "findings": []}
+        owasp_breakdown[cat_name]["count"] += 1
+        owasp_breakdown[cat_name]["findings"].append(f.id)
+        total_points += points_map.get(f.severity, 0)
+        
+        if hasattr(f, 'owasp_category'):
+            f.owasp_category = cat_code
+            db.commit()
+
+    risk_score = int((total_points / (len(findings) * 10)) * 100) if findings else 0
+    top_category = max(owasp_breakdown, key=lambda k: owasp_breakdown[k]['count']) if owasp_breakdown else "N/A"
+    
+    narrative_prompt = f"""
+    Security audit results for {project.name}:
+    Total findings: {len(findings)}
+    OWASP breakdown: {json.dumps(owasp_breakdown)}
+    Risk score: {risk_score}/100
+    Write 2-paragraph executive summary for CISO. Plain English, no jargon.
+    """
+    narrative_resp = ai_gateway.client.chat.completions.create(
+        messages=[{"role": "user", "content": narrative_prompt}],
+        model="llama-3.3-70b-versatile"
+    )
+    narrative = narrative_resp.choices[0].message.content
+    
+    return {
+        "risk_score": risk_score,
+        "owasp_breakdown": owasp_breakdown,
+        "top_category": top_category,
+        "total_findings": len(findings),
+        "narrative": narrative
+    }
+
+# ==========================================
+# ENDPOINT 3: AI LEARNINGS
+# ==========================================
+@router.get("/ai/learnings/{project_id}")
+def get_ai_learnings(project_id: int, db: Session = Depends(get_db)):
+    kb = db.query(KnowledgeBase).filter(
+        KnowledgeBase.title.like("learnings:%")
+    ).order_by(KnowledgeBase.created_at.desc()).first()
+    
+    if not kb:
+        return {"status": "no_learnings", "message": "Run at least one complete autonomous scan first"}
+    
+    try:
+        return json.loads(kb.content)
+    except:
+        return {"raw_content": kb.content}
+
 @router.get("/ai/validate/{finding_id}")
 def ai_validate_finding(finding_id: int, db: Session = Depends(get_db)):
     finding = db.query(Finding).filter(Finding.id == finding_id).first()
@@ -51,21 +142,6 @@ def ai_validate_finding(finding_id: int, db: Session = Depends(get_db)):
     finding_dict = {"tool": finding.tool, "title": finding.title}
     validation_result = ai_gateway.validate_finding(finding_dict, evidence_text)
     return {"validation_result": validation_result}
-
-@router.get("/audit/owasp/{project_id}")
-def owasp_audit(project_id: int, db: Session = Depends(get_db)):
-    project = db.query(models.Project).filter(models.Project.id == project_id).first()
-    if not project: raise HTTPException(status_code=404, detail="Project not found")
-    findings = db.query(Finding).filter(Finding.project_id == project_id).all()
-    if not findings: raise HTTPException(status_code=400, detail="No findings to audit.")
-    
-    findings_list = [{"id": f.id, "title": f.title, "severity": f.severity, "tool": f.tool} for f in findings]
-    audit_result = ai_gateway.owasp_audit(project.name, findings_list)
-    
-    if "error" in audit_result:
-        raise HTTPException(status_code=500, detail=audit_result["error"])
-        
-    return {"status": "success", "audit": audit_result}
 
 @router.get("/ai/wordlist/{target}")
 def get_ai_wordlist(target: str):

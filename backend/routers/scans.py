@@ -37,7 +37,27 @@ async def execute_scan(project_id: int, target: str, tool: str, db: Session = De
 def execute_autonomous_scan(project_id: int, target: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     validate_target(target)
     background_tasks.add_task(autonomous_worker, project_id, target)
-    return {"status": "success", "message": "Autonomous State Machine Started."}
+    return {"status": "success", "message": "Multi-Agent Autonomous State Machine Started."}
+
+@router.post("/api/council/{finding_id}")
+def run_council_review(
+    finding_id: int, 
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user)
+):
+    from agents.orchestrator import orchestrator
+    finding = db.query(models.Finding).filter(
+        models.Finding.id == finding_id
+    ).first()
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    
+    result = orchestrator.run_council_review(
+        db=db,
+        project_id=finding.project_id,
+        finding_id=finding_id
+    )
+    return result
 
 @router.websocket("/ws/terminal")
 async def websocket_terminal(websocket: WebSocket):

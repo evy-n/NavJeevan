@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import models
-from models import Finding, DecisionLog, KnowledgeBase, Setting
+from models import Finding, DecisionLog, KnowledgeBase, Setting, Evidence
 from database import get_db
 from core.dependencies import get_current_user
 
@@ -21,6 +21,46 @@ def update_finding_status(finding_id: int, status: str, db: Session = Depends(ge
     if not finding: return {"status": "error", "message": "Not found"}
     finding.status = status; db.commit()
     return {"status": "success"}
+
+# ==========================================
+# ENDPOINT 2: QUALITY GATE
+# ==========================================
+@router.get("/findings/quality-gate/{project_id}")
+def quality_gate(project_id: int, db: Session = Depends(get_db)):
+    findings = db.query(Finding).filter(Finding.project_id == project_id).all()
+    
+    if not findings:
+        return {
+            "findings_detected": 0,
+            "all_have_evidence": False,
+            "avg_confidence": 0.0,
+            "confirmed_count": 0,
+            "false_positive_count": 0,
+            "gate_passed": False
+        }
+        
+    total_conf = sum(f.confidence for f in findings)
+    avg_confidence = total_conf / len(findings)
+    confirmed_count = len([f for f in findings if f.status == "Confirmed"])
+    false_positive_count = len([f for f in findings if f.status == "False Positive"])
+    
+    all_have_evidence = True
+    for f in findings:
+        evidences = db.query(Evidence).filter(Evidence.finding_id == f.id).count()
+        if evidences == 0:
+            all_have_evidence = False
+            break
+            
+    gate_passed = len(findings) >= 1 and avg_confidence >= 60 and all_have_evidence
+    
+    return {
+        "findings_detected": len(findings),
+        "all_have_evidence": all_have_evidence,
+        "avg_confidence": avg_confidence,
+        "confirmed_count": confirmed_count,
+        "false_positive_count": false_positive_count,
+        "gate_passed": gate_passed
+    }
 
 @router.get("/global_logs")
 def get_global_logs(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
