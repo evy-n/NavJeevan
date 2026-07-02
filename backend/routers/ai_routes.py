@@ -14,7 +14,7 @@ def generate_ai_plan(project_id: int, db: Session = Depends(get_db)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project: raise HTTPException(status_code=404, detail="Project not found")
     
-    # BUG 3 FIX: Fetch first asset, fallback to project name
+    # Fetch first asset, fallback to project name
     asset = db.query(models.Asset).filter(models.Asset.project_id == project_id).first()
     target_for_plan = asset.name if asset else project.name
     
@@ -23,7 +23,6 @@ def generate_ai_plan(project_id: int, db: Session = Depends(get_db)):
     db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == "Pending").delete()
     
     for tool_name in tool_plan:
-        # Also saving tool_name here for consistency
         db.add(models.Task(project_id=project_id, name=f"Run {tool_name.upper()} Scan", tool_name=tool_name, status="Pending", priority="High"))
     db.commit()
     
@@ -48,16 +47,25 @@ def ai_validate_finding(finding_id: int, db: Session = Depends(get_db)):
     if not finding: raise HTTPException(status_code=404, detail="Finding not found")
     evidences = db.query(Evidence).filter(Evidence.finding_id == finding_id).all()
     evidence_text = "\n".join([e.raw_output for e in evidences]) or "No raw evidence."
-    if not ai_gateway.client: return {"validation_result": "AI Not Configured."}
     
-    prompt = f"Act as a Senior Application Security Expert. Tool: {finding.tool} Finding Title: {finding.title} Raw Evidence: {evidence_text} Analyze this evidence. Is this a True Positive or False Positive? Reply strictly in format: Verdict: [True/False] Reason: [1-2 lines]"
-    try:
-        chat_completion = ai_gateway.client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192"
-        )
-        return {"validation_result": chat_completion.choices[0].message.content}
-    except Exception as e: return {"validation_result": f"AI Error: {str(e)}"}
+    finding_dict = {"tool": finding.tool, "title": finding.title}
+    validation_result = ai_gateway.validate_finding(finding_dict, evidence_text)
+    return {"validation_result": validation_result}
+
+@router.get("/audit/owasp/{project_id}")
+def owasp_audit(project_id: int, db: Session = Depends(get_db)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not project: raise HTTPException(status_code=404, detail="Project not found")
+    findings = db.query(Finding).filter(Finding.project_id == project_id).all()
+    if not findings: raise HTTPException(status_code=400, detail="No findings to audit.")
+    
+    findings_list = [{"id": f.id, "title": f.title, "severity": f.severity, "tool": f.tool} for f in findings]
+    audit_result = ai_gateway.owasp_audit(project.name, findings_list)
+    
+    if "error" in audit_result:
+        raise HTTPException(status_code=500, detail=audit_result["error"])
+        
+    return {"status": "success", "audit": audit_result}
 
 @router.get("/ai/wordlist/{target}")
 def get_ai_wordlist(target: str):
