@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  navjeevan-backend:
+    build: .
+    container_name: navjeevan_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
