@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -28,7 +28,6 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"))
     name = Column(String, index=True)
-    # BUG 4 FIX: Added tool_name column for robust tool extraction
     tool_name = Column(String, nullable=True)
     status = Column(String, default="Pending")
     priority = Column(String, default="Medium")
@@ -57,6 +56,11 @@ class Finding(Base):
     confidence = Column(Integer, default=0)
     raw_data = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # BUG 1 FIX: 3 New Columns added
+    cvss_score = Column(Float, nullable=True, default=0.0)
+    owasp_category = Column(String, nullable=True)
+    council_verdict = Column(String, nullable=True)
 
 class Evidence(Base):
     __tablename__ = "evidence"

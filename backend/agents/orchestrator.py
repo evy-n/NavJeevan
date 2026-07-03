@@ -4,8 +4,9 @@ from agents.validator_agent import ValidatorAgent
 from agents.learning_agent import LearningAgent
 from agents.reporting_agent import ReportingAgent
 from agents.council_agent import CouncilAgent
-from models import AgentMessage
+from models import AgentMessage, KnowledgeBase, Task
 from datetime import datetime
+import models
 
 class AgentOrchestrator:
     def __init__(self):
@@ -26,11 +27,30 @@ class AgentOrchestrator:
         self._log_orchestrator(db, project_id, "Full autonomous scan started")
         
         # Get past learnings for context
-        from models import KnowledgeBase
         past_kb = db.query(KnowledgeBase).filter(
             KnowledgeBase.title.like(f"learnings:{target}%")
         ).order_by(KnowledgeBase.created_at.desc()).first()
         past_learnings = past_kb.content if past_kb else ""
+        
+        # IMPROVEMENT 2: Use context-aware planning
+        from ai_engine import ai_gateway
+        tool_plan = ai_gateway.get_autonomous_plan_with_context(
+            project.name if project else "Project", 
+            target, 
+            past_learnings
+        )
+        
+        # Create Tasks in DB for UI visibility
+        db.query(Task).filter(Task.project_id == project_id, Task.status == "Pending").delete()
+        for tool_name in tool_plan:
+            db.add(Task(
+                project_id=project_id, 
+                name=f"Run {tool_name.upper()} Scan", 
+                tool_name=tool_name, 
+                status="Pending", 
+                priority="High"
+            ))
+        db.commit()
         
         context = {"db": db, "project": project, 
                    "past_learnings": past_learnings}
@@ -74,7 +94,6 @@ class AgentOrchestrator:
         return self.council.execute(project_id, "", context)
     
     def _log_orchestrator(self, db, project_id: int, message: str):
-        from models import AgentMessage
         msg = AgentMessage(
             project_id=project_id,
             sender_agent="Orchestrator",

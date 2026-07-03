@@ -11,20 +11,7 @@ router = APIRouter(prefix="/api", tags=["Findings & Logs"])
 def get_decision_logs(project_id: int, db: Session = Depends(get_db)):
     return db.query(DecisionLog).filter(DecisionLog.project_id == project_id).all()
 
-@router.get("/findings/{project_id}")
-def get_findings(project_id: int, db: Session = Depends(get_db)):
-    return db.query(Finding).filter(Finding.project_id == project_id).all()
-
-@router.put("/findings/{finding_id}")
-def update_finding_status(finding_id: int, status: str, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
-    finding = db.query(Finding).filter(Finding.id == finding_id).first()
-    if not finding: return {"status": "error", "message": "Not found"}
-    finding.status = status; db.commit()
-    return {"status": "success"}
-
-# ==========================================
-# ENDPOINT 2: QUALITY GATE
-# ==========================================
+# BUG 2 FIX: Quality Gate route moved ABOVE /findings/{project_id} to prevent routing conflicts
 @router.get("/findings/quality-gate/{project_id}")
 def quality_gate(project_id: int, db: Session = Depends(get_db)):
     findings = db.query(Finding).filter(Finding.project_id == project_id).all()
@@ -61,6 +48,17 @@ def quality_gate(project_id: int, db: Session = Depends(get_db)):
         "false_positive_count": false_positive_count,
         "gate_passed": gate_passed
     }
+
+@router.get("/findings/{project_id}")
+def get_findings(project_id: int, db: Session = Depends(get_db)):
+    return db.query(Finding).filter(Finding.project_id == project_id).all()
+
+@router.put("/findings/{finding_id}")
+def update_finding_status(finding_id: int, status: str, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    finding = db.query(Finding).filter(Finding.id == finding_id).first()
+    if not finding: return {"status": "error", "message": "Not found"}
+    finding.status = status; db.commit()
+    return {"status": "success"}
 
 @router.get("/global_logs")
 def get_global_logs(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):

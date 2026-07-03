@@ -82,13 +82,10 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>Logs & Audit</span>
                 </a>
-                
-                <!-- NAYA TAB: ELITE AI & BROWSER -->
                 <a href="#" onclick="showView('elite')" id="nav-elite" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg hover:bg-gray-800 text-gray-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                     <span>Elite AI & Browser</span>
                 </a>
-
                 <a href="#" onclick="showView('settings')" id="nav-settings" class="flex items-center space-x-3 px-3 py-2.5 rounded-lg hover:bg-gray-800 text-gray-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>Settings & Config</span>
@@ -129,22 +126,32 @@
                         <h3 class="text-sm font-semibold text-white uppercase mb-4">System Overview</h3>
                         <div class="space-y-3 text-xs mb-4">
                             <div class="flex justify-between items-center"><span class="text-gray-400">Database</span><span id="sys-db" class="text-green-400 flex items-center"><span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>Checking...</span></div>
-                            <div class="flex justify-between items-center"><span class="text-gray-400">AI Engine</span><span id="sys-ai" class="text-green-400 flex items-center"><span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>Checking...</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-400">Groq AI</span><span id="sys-groq" class="text-green-400 flex items-center"><span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>Checking...</span></div>
                             <div class="flex justify-between items-center"><span class="text-gray-400">Tool Engine</span><span id="sys-tool" class="text-green-400 flex items-center"><span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>Checking...</span></div>
                         </div>
-                        
-                        <!-- NAYA: Tool Ecosystem Status -->
                         <h3 class="text-sm font-semibold text-white uppercase mb-2 pt-2 border-t border-gray-800 flex justify-between items-center">
                             <span>Tool Ecosystem Status</span>
                             <button onclick="loadToolStatus()" class="text-xs text-accent hover:underline normal-case">Refresh</button>
                         </h3>
-                        <div id="tools-health-grid" class="grid grid-cols-2 gap-2 text-xs max-h-48 overflow-y-auto pr-1">
-                            <!-- Yahan tools ka status automatically aayega -->
-                        </div>
+                        <div id="tools-health-grid" class="grid grid-cols-2 gap-2 text-xs max-h-48 overflow-y-auto pr-1"></div>
                     </div>
                     <div class="bg-card p-4 rounded-xl border border-gray-800">
                         <h3 class="text-sm font-semibold text-white uppercase mb-4">Recent Activity</h3>
                         <div id="log-list" class="space-y-2 max-h-48 overflow-y-auto text-xs"><p class="text-gray-500">No activity yet.</p></div>
+                    </div>
+                </div>
+                
+                <!-- FEATURE 2: Live Activity Feed -->
+                <div class="bg-card rounded-xl border border-gray-800 p-4 mt-6">
+                    <h3 class="text-sm font-semibold text-white uppercase mb-3 flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-accent animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>Live Agent Activity</span>
+                    </h3>
+                    <div class="flex space-x-2 mb-3">
+                        <select id="feed-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/3"><option value="">Select Project</option></select>
+                    </div>
+                    <div id="activity-feed" class="space-y-2 max-h-64 overflow-y-auto pr-2 bg-gray-900 p-3 rounded-lg border border-gray-800">
+                        <p class="text-gray-500 text-xs text-center">Select a project to see live agent activity.</p>
                     </div>
                 </div>
             </div>
@@ -158,8 +165,6 @@
                         <span>New Project</span>
                     </button>
                 </div>
-                
-                <!-- Config & CSV Upload Section -->
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mb-4 space-y-4">
                     <div>
                         <h3 class="text-sm font-semibold text-white mb-2">Bulk Import Targets (CSV)</h3>
@@ -169,37 +174,26 @@
                             <button onclick="uploadCSV()" class="bg-green-600 text-white px-4 py-1.5 rounded text-xs">Upload CSV</button>
                         </div>
                     </div>
-                    <div class="border-t border-gray-800 pt-4">
-                        <h3 class="text-sm font-semibold text-white mb-2">Import Config File (JSON/TXT/Burp Scope)</h3>
-                        <div class="flex space-x-2">
-                            <select id="config-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/3"><option value="">Select Project</option></select>
-                            <input type="file" id="config-file-input" accept=".json,.txt,.xml" class="text-xs text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-700 file:text-white">
-                            <button onclick="uploadConfig()" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-xs">Upload Config</button>
-                        </div>
-                    </div>
                 </div>
-
-                <div class="bg-card rounded-xl border border-gray-800 p-4"><div id="project-list" class="space-y-3"></div></div>
+                <div class="bg-card rounded-xl border border-gray-800 p-4"><div id="project-list" class="space-y-4"></div></div>
             </div>
 
             <!-- WORKFLOW & COVERAGE VIEW -->
             <div id="view-workflow" class="view-section hidden p-6">
                 <h2 class="text-2xl font-bold text-white mb-6">Master Plan & Coverage Map</h2>
-                
                 <div class="grid grid-cols-4 gap-4 mb-6">
                     <div class="bg-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-500 uppercase">Total Assets</p><h3 class="text-2xl font-bold text-white mt-1" id="cov-assets">0</h3></div>
                     <div class="bg-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-500 uppercase">Planned Tools</p><h3 class="text-2xl font-bold text-accent mt-1" id="cov-planned">0</h3></div>
                     <div class="bg-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-500 uppercase">Completed</p><h3 class="text-2xl font-bold text-green-400 mt-1" id="cov-completed">0</h3></div>
                     <div class="bg-card p-4 rounded-xl border border-gray-800"><p class="text-xs text-gray-500 uppercase">Coverage %</p><h3 class="text-2xl font-bold text-white mt-1" id="cov-percent">0%</h3></div>
                 </div>
-
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-sm font-semibold text-white uppercase">Execution Checklist</h3>
                         <div class="flex space-x-2">
                             <select id="task-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/3"><option value="">Select Project</option></select>
                             <button onclick="generatePlanUI()" class="bg-accent text-black px-3 py-1.5 rounded text-xs font-bold flex items-center space-x-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <svg class="w-4 h-4" fill="none, stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 <span>Generate AI Plan</span>
                             </button>
                         </div>
@@ -214,7 +208,13 @@
                 <div class="bg-card rounded-xl border border-gray-800 p-4">
                     <div class="flex space-x-2 mb-3 relative">
                         <select id="exec-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/4"><option value="">Select Project</option></select>
-                        <div class="relative w-1/4">
+                        <!-- FEATURE 3: Bug Bounty Mode -->
+                        <select id="bounty-mode" onchange="updateBountyMode()" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/5">
+                            <option value="default">Default Mode</option>
+                            <option value="web2">Web2 / HackerOne</option>
+                            <option value="web3">Web3 / Smart Contracts</option>
+                        </select>
+                        <div class="relative w-1/5">
                             <input type="text" id="tool-search" placeholder="Search 120+ tools..." class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-full" onfocus="document.getElementById('tool-dropdown').classList.remove('hidden')" onblur="setTimeout(() => document.getElementById('tool-dropdown').classList.add('hidden'), 200)" onkeyup="filterTools()">
                             <input type="hidden" id="selected-tool" value="nmap">
                             <div id="tool-dropdown" class="absolute hidden mt-1 w-full bg-gray-900 border border-gray-700 rounded shadow-lg z-50 tool-dropdown"></div>
@@ -232,7 +232,9 @@
             <div id="view-findings" class="view-section hidden p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-white">Findings & Evidence</h2>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 flex-wrap gap-2">
+                        <!-- FEATURE 1: Validate All -->
+                        <button onclick="validateAll()" class="bg-yellow-600 text-white px-4 py-2 rounded text-sm font-medium">🔍 Validate All</button>
                         <button onclick="generateAttackPath()" class="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium animate-pulse">🧠 Attack Path</button>
                         <button onclick="runOwaspAudit()" class="bg-orange-600 text-white px-4 py-2 rounded text-sm font-medium">🛡️ OWASP Audit</button>
                         <button onclick="checkQualityGate()" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium">✅ Quality Gate</button>
@@ -254,9 +256,9 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-gray-800 text-gray-400 uppercase">
-                                <tr><th class="p-3">Severity</th><th class="p-3">Finding</th><th class="p-3">Target</th><th class="p-3">Tool</th><th class="p-3">Confidence</th><th class="p-3">Status</th><th class="p-3">Actions</th></tr>
+                                <tr><th class="p-3">Severity</th><th class="p-3">Finding</th><th class="p-3">Target</th><th class="p-3">CVSS</th><th class="p-3">Status</th><th class="p-3">Actions</th></tr>
                             </thead>
-                            <tbody id="findings-table-body" class="divide-y divide-gray-800"><tr><td colspan="7" class="p-4 text-center text-gray-500">Select project to view findings.</td></tr></tbody>
+                            <tbody id="findings-table-body" class="divide-y divide-gray-800"><tr><td colspan="6" class="p-4 text-center text-gray-500">Select project to view findings.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -291,20 +293,28 @@
                 </div>
             </div>
 
-            <!-- ELITE FEATURES VIEW (NAYA TAB) -->
+            <!-- ELITE FEATURES VIEW -->
             <div id="view-elite" class="view-section hidden p-6">
                 <h2 class="text-2xl font-bold text-white mb-6">Elite AI & Browser Intelligence</h2>
-                
-                <!-- AI Learnings -->
+                <div class="bg-card rounded-xl border border-gray-800 p-4 mb-6">
+                    <h3 class="text-sm font-semibold text-white mb-2">Agent Communications</h3>
+                    <div class="flex space-x-2 mb-3">
+                        <select id="agent-msg-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/3"><option value="">Select Project</option></select>
+                        <button onclick="loadAgentMessages()" class="bg-accent text-black px-3 py-1.5 rounded text-xs">Fetch Messages</button>
+                    </div>
+                    <div id="agent-msg-output" class="space-y-2 max-h-64 overflow-y-auto text-xs">
+                        <p class="text-gray-500">Agent chat logs will appear here.</p>
+                    </div>
+                </div>
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mb-6">
                     <h3 class="text-sm font-semibold text-white mb-2">AI Learnings & Patterns</h3>
                     <div class="flex space-x-2 mb-3">
                         <button onclick="loadAILearnings()" class="bg-accent text-black px-3 py-1.5 rounded text-xs">Fetch Latest Learnings</button>
                     </div>
                     <div id="learnings-output" class="bg-gray-800 p-3 rounded text-xs text-gray-400 max-h-48 overflow-y-auto">Click button to fetch AI learnings from past scans.</div>
+                    <!-- FEATURE 2: Apply Learnings Button -->
+                    <button onclick="applyLearningsAsScan()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs mt-2">✅ Apply as Next Scan Plan</button>
                 </div>
-
-                <!-- Adaptive Wordlist -->
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mb-6">
                     <h3 class="text-sm font-semibold text-white mb-2">Adaptive Wordlist Generator (AI)</h3>
                     <div class="flex space-x-2 mb-3">
@@ -313,8 +323,6 @@
                     </div>
                     <div id="wordlist-output" class="bg-gray-800 p-3 rounded text-xs text-gray-400 max-h-32 overflow-y-auto">Wordlist will appear here...</div>
                 </div>
-
-                <!-- Browser Intelligence -->
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mb-6">
                     <h3 class="text-sm font-semibold text-white mb-2">Browser Intelligence (Playwright)</h3>
                     <div class="flex space-x-2">
@@ -323,8 +331,6 @@
                         <button onclick="runBrowserIntel()" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs">Run Headless Scan</button>
                     </div>
                 </div>
-
-                <!-- Plugin Marketplace -->
                 <div class="bg-card rounded-xl border border-gray-800 p-4">
                     <h3 class="text-sm font-semibold text-white mb-2">Plugin Marketplace (Drop .py files)</h3>
                     <div class="flex space-x-2">
@@ -368,7 +374,7 @@
                 <h3 id="ai-modal-title" class="text-xl font-bold text-accent">Navjeevan AI</h3>
                 <button onclick="document.getElementById('ai-modal').classList.add('hidden')" class="text-gray-400 hover:text-white text-xl">X</button>
             </div>
-            <pre id="ai-output" class="text-gray-300 text-sm whitespace-pre-wrap font-mono bg-gray-800 p-4 rounded"></pre>
+            <div id="ai-output" class="text-gray-300 text-sm whitespace-pre-wrap font-mono bg-gray-800 p-4 rounded"></div>
         </div>
     </div>
 
@@ -413,7 +419,6 @@
 
         async function initApp() { showView('dashboard'); loadProjects(); loadSystemHealth(); loadToolCategories(); loadToolStatus(); }
 
-        // Dynamic Tool Status Fetch
         async function loadToolStatus() {
             try {
                 const res = await apiFetch('/api/tools/status');
@@ -476,14 +481,25 @@
                 document.getElementById('sidebar-health').innerText = data.health_score + '%';
                 document.getElementById('sidebar-health-bar').style.width = data.health_score + '%';
                 document.getElementById('sys-db').innerText = data.database;
-                document.getElementById('sys-ai').innerText = data.ai_engine;
                 document.getElementById('sys-tool').innerText = data.tool_engine;
+                
+                const groqStatus = document.getElementById('sys-groq');
+                const groqConnected = data.groq_connected || data.ai_engine === 'Online';
+                if(groqConnected) {
+                    groqStatus.innerHTML = '<span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>Connected';
+                    groqStatus.className = 'text-green-400 flex items-center';
+                } else {
+                    groqStatus.innerHTML = '<span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>Offline';
+                    groqStatus.className = 'text-red-400 flex items-center';
+                }
                 
                 const agentGrid = document.getElementById('agent-grid');
                 agentGrid.innerHTML = data.agents.map(a => `
                     <div class="bg-card p-4 rounded-xl border border-gray-800">
                         <div class="flex justify-between items-center mb-2"><h4 class="text-sm font-medium text-white">${a.name}</h4><span class="w-2 h-2 rounded-full ${a.status === 'Active' ? 'bg-green-500' : a.status === 'Standby' ? 'bg-yellow-500' : 'bg-red-500'}"></span></div>
-                        <p class="text-xs text-gray-500">${a.role}</p><p class="text-xs mt-2 ${a.status === 'Active' ? 'text-green-400' : a.status === 'Standby' ? 'text-yellow-400' : 'text-red-400'}">${a.status}</p>
+                        <p class="text-xs text-gray-500">${a.role}</p>
+                        <p class="text-xs mt-2 ${a.status === 'Active' ? 'text-green-400' : a.status === 'Standby' ? 'text-yellow-400' : 'text-red-400'}">${a.status}</p>
+                        <div class="text-xs text-gray-500 mt-2 truncate">Last: ${a.last_action || 'N/A'}</div>
                     </div>`).join('');
                 
                 const execSel = document.getElementById('exec-project-select');
@@ -496,17 +512,51 @@
         setInterval(loadSystemHealth, 5000);
         setInterval(() => {
             if (!document.getElementById('view-workflow').classList.contains('hidden')) loadTasks();
-        }, 4000); // Auto-refresh checklist
+        }, 4000);
+        
+        // Auto refresh Live Activity Feed every 4 seconds
+        setInterval(() => {
+            const pid = document.getElementById('feed-project-select').value;
+            if(pid) loadActivityFeed(pid);
+        }, 4000);
 
         async function loadProjects() {
             const res = await apiFetch('/api/projects/'); const projects = await res.json();
             const list = document.getElementById('project-list');
-            const selects = ['task-project-select', 'exec-project-select', 'findings-project-select', 'map-project-select', 'csv-project-select', 'config-project-select', 'browser-project-select'];
+            const selects = ['task-project-select', 'exec-project-select', 'findings-project-select', 'map-project-select', 'csv-project-select', 'browser-project-select', 'agent-msg-project-select', 'feed-project-select'];
             list.innerHTML = '';
             selects.forEach(id => { document.getElementById(id).innerHTML = '<option value="">Select Project</option>'; });
             if (projects.length === 0) { list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No projects yet.</p>'; return; }
             projects.forEach(p => {
-                list.innerHTML += `<div class="bg-gray-800 p-4 rounded-lg flex justify-between items-center border border-gray-700"><div><h4 class="text-white font-medium text-sm">${p.name}</h4><p class="text-xs text-gray-500 mt-1">${p.description || ''}</p></div></div>`;
+                list.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h4 class="text-white font-medium text-sm">${p.name}</h4>
+                                <p class="text-xs text-gray-500 mt-1">${p.description || ''}</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 pt-4 border-t border-gray-700">
+                            <h5 class="text-xs text-gray-400 uppercase mb-2">Targets</h5>
+                            <div class="flex space-x-2 mb-2">
+                                <input type="text" id="asset-name-${p.id}" placeholder="URL/IP" class="bg-gray-700 text-white rounded px-2 py-1 text-xs flex-1">
+                                <select id="asset-type-${p.id}" class="bg-gray-700 text-white rounded px-2 py-1 text-xs w-24">
+                                    <option value="domain">Domain</option>
+                                    <option value="url">URL</option>
+                                    <option value="ip">IP</option>
+                                </select>
+                                <button onclick="addProjectAsset(${p.id})" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Add</button>
+                            </div>
+                            <div id="assets-list-${p.id}" class="space-y-1"></div>
+                        </div>
+                        <div class="pt-4 border-t border-gray-700">
+                            <h5 class="text-xs text-gray-400 uppercase mb-2">Mission Context</h5>
+                            <textarea id="mission-context-${p.id}" rows="2" placeholder="Describe your target: e.g. Banking app, looking for IDOR and auth bypass. Login at /auth, API at /api/v2/..." class="bg-gray-700 text-white rounded p-2 text-xs w-full mb-2"></textarea>
+                            <button onclick="generateSmartPlan(${p.id})" class="bg-accent text-black px-3 py-1.5 rounded text-xs font-bold w-full">Generate Smart Plan</button>
+                        </div>
+                    </div>
+                `;
+                loadProjectAssets(p.id);
                 selects.forEach(id => { document.getElementById(id).innerHTML += `<option value="${p.id}">${p.name}</option>`; });
             });
         }
@@ -524,20 +574,55 @@
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
             const res = await apiFetch(`/api/import/csv/${pid}`, { method: 'POST', body: formData });
-            const data = await res.json(); alert(data.message);
+            const data = await res.json(); alert(data.message); loadProjectAssets(pid);
         }
 
-        async function uploadConfig() {
-            const pid = document.getElementById('config-project-select').value;
-            const fileInput = document.getElementById('config-file-input');
-            if(!pid || !fileInput.files[0]) return alert('Select project and file');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            const res = await apiFetch(`/api/import/config/${pid}`, { method: 'POST', body: formData });
-            const data = await res.json(); alert(data.message);
+        async function loadProjectAssets(pid) {
+            try {
+                const res = await apiFetch(`/api/assets/${pid}`);
+                const assets = await res.json();
+                const list = document.getElementById(`assets-list-${pid}`);
+                if(assets.length === 0) {
+                    list.innerHTML = '<p class="text-gray-500 text-xs">No targets added yet.</p>';
+                    return;
+                }
+                list.innerHTML = assets.map(a => `
+                    <div class="flex items-center justify-between bg-gray-700 p-2 rounded text-xs">
+                        <span class="text-gray-300 truncate flex-1">${a.name}</span>
+                        <span class="text-gray-500 ml-2 px-1 bg-gray-800 rounded">${a.type}</span>
+                        <button onclick="deleteProjectAsset(${a.id}, ${pid})" class="text-red-400 hover:text-red-300 ml-2 font-bold">X</button>
+                    </div>
+                `).join('');
+            } catch(e) {}
         }
 
-        // MASTER PLAN & COVERAGE LOGIC
+        async function addProjectAsset(pid) {
+            const name = document.getElementById(`asset-name-${pid}`).value;
+            const type = document.getElementById(`asset-type-${pid}`).value;
+            if(!name) return alert('Enter URL or IP');
+            await apiFetch('/api/assets/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({project_id: pid, name, type, status: "Active"}) });
+            document.getElementById(`asset-name-${pid}`).value = '';
+            loadProjectAssets(pid);
+        }
+
+        async function deleteProjectAsset(assetId, pid) {
+            await apiFetch(`/api/assets/${assetId}`, { method: 'DELETE' });
+            loadProjectAssets(pid);
+        }
+
+        async function generateSmartPlan(pid) {
+            const context = document.getElementById(`mission-context-${pid}`).value;
+            if(!context) return alert('Please enter mission context.');
+            document.getElementById('ai-modal-title').innerText = "🧠 AI Smart Plan";
+            document.getElementById('ai-output').innerText = "Generating context-aware plan...";
+            document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex');
+            try {
+                const res = await apiFetch(`/api/ai/smart-plan/${pid}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({context}) });
+                const data = await res.json();
+                document.getElementById('ai-output').innerText = data.plan;
+            } catch(e) { document.getElementById('ai-output').innerText = "Error generating smart plan."; }
+        }
+
         async function generatePlanUI() {
             const pid = document.getElementById('task-project-select').value;
             if(!pid) return alert('Select project first');
@@ -548,7 +633,7 @@
                 const res = await apiFetch(`/api/ai/plan/${pid}`);
                 const data = await res.json();
                 document.getElementById('ai-output').innerText = data.ai_plan;
-                loadTasks(); // Refresh checklist
+                loadTasks();
             } catch(e) {}
         }
 
@@ -557,21 +642,17 @@
             if(!pid) return;
             const res = await apiFetch(`/api/tasks/${pid}`); const tasks = await res.json();
             const list = document.getElementById('task-list');
-            
             const total = tasks.length;
             const completed = tasks.filter(t => t.status === 'Completed').length;
             document.getElementById('cov-planned').innerText = total;
             document.getElementById('cov-completed').innerText = completed;
             document.getElementById('cov-percent').innerText = total > 0 ? Math.round((completed/total)*100) + '%' : '0%';
-
             if(tasks.length === 0) { list.innerHTML = '<p class="text-gray-500 text-sm">No plan generated. Click "Generate AI Plan".</p>'; return; }
-            
             list.innerHTML = tasks.map(t => {
                 let icon = '⏳'; let color = 'text-yellow-400'; 
                 if(t.status === 'Completed') { icon = '✅'; color = 'text-green-400'; }
                 else if(t.status === 'Running') { icon = '🔄'; color = 'text-blue-400 animate-spin'; }
                 else if(t.status === 'Failed') { icon = '❌'; color = 'text-red-400'; }
-                
                 return `
                 <div class="bg-gray-800 p-3 rounded flex justify-between items-center border border-gray-700">
                     <div class="flex items-center space-x-3">
@@ -587,6 +668,7 @@
         }
 
         document.getElementById('task-project-select').addEventListener('change', loadTasks);
+        document.getElementById('feed-project-select').addEventListener('change', (e) => { if(e.target.value) loadActivityFeed(e.target.value); });
 
         async function executeTask(taskId, status) {
             if(status === 'Running') {
@@ -597,68 +679,130 @@
             loadTasks();
         }
 
-        // ==========================================
-        // LIVE TERMINAL & STOP SCAN LOGIC
-        // ==========================================
-        let ws = null; // Global WebSocket variable (Taaki tab switch hone par bhi connection toote nahi)
+        // FEATURE 3: Bug Bounty Mode Selector
+        function updateBountyMode() {
+            const mode = document.getElementById('bounty-mode').value;
+            const targetInput = document.getElementById('exec-target-input');
+            if(mode === 'web3') {
+                targetInput.placeholder = "0x742d35Cc... (Smart Contract Address)";
+                document.getElementById('exec-output').innerText = "[Web3 Mode] Tools: slither, mythril, semgrep-solidity\nTarget: Smart contract address";
+            } else if(mode === 'web2') {
+                targetInput.placeholder = "https://target.com (HackerOne scope)";
+                document.getElementById('exec-output').innerText = "Waiting for execution command...";
+            } else {
+                targetInput.placeholder = "Target (e.g., scanme.nmap.org)";
+                document.getElementById('exec-output').innerText = "Waiting for execution command...";
+            }
+        }
 
+        let ws = null;
         async function executeScan() {
             const pid = document.getElementById('exec-project-select').value;
             const target = document.getElementById('exec-target-input').value;
             const tool = document.getElementById('selected-tool').value;
             if(!pid || !target) return alert('Select project and target');
-            
             const out = document.getElementById('exec-output');
-            out.innerText = ''; 
-            out.className = "text-green-400 text-xs whitespace-pre-wrap font-mono";
-            
-            // Buttons toggle karna
+            out.innerText = ''; out.className = "text-green-400 text-xs whitespace-pre-wrap font-mono";
             document.getElementById('btn-exec').classList.add('hidden');
             document.getElementById('btn-stop').classList.remove('hidden');
-            
-            // WebSocket Connection
             ws = new WebSocket(`ws://${window.location.host}/ws/terminal`);
-            
             ws.onopen = () => { ws.send(JSON.stringify({project_id: parseInt(pid), target, tool})); };
-            ws.onmessage = (event) => { 
-                out.innerText += event.data + '\n'; 
-                out.scrollTop = out.scrollHeight; 
-            };
-            ws.onerror = () => { 
-                out.innerText += "\n[Error] Connection lost."; 
-                out.className = "text-red-400 text-xs whitespace-pre-wrap font-mono"; 
-            };
+            ws.onmessage = (event) => { out.innerText += event.data + '\n'; out.scrollTop = out.scrollHeight; };
+            ws.onerror = () => { out.innerText += "\n[Error] Connection lost."; out.className = "text-red-400 text-xs whitespace-pre-wrap font-mono"; };
             ws.onclose = () => {
-                // Wapas Execute button dikha do
                 document.getElementById('btn-exec').classList.remove('hidden');
                 document.getElementById('btn-stop').classList.add('hidden');
             };
         }
 
         function stopScan() {
-            if(ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({action: "stop"})); // Backend ko stop signal
-            }
+            if(ws && ws.readyState === WebSocket.OPEN) { ws.send(JSON.stringify({action: "stop"})); }
         }
 
         async function executeAutonomousScan() {
             const pid = document.getElementById('exec-project-select').value; const target = document.getElementById('exec-target-input').value;
             if(!pid || !target) return alert('Select project and target');
             const out = document.getElementById('exec-output');
-            out.innerText = `[🤖] Autonomous scan started! Check Master Plan & Logs for progress.`;
+            out.innerText = `[🤖] Multi-Agent Autonomous scan started! Check Master Plan & Logs for progress.`;
             out.className = "text-green-400 text-xs whitespace-pre-wrap font-mono";
             try { await apiFetch(`/api/execute/autonomous/${pid}?target=${target}`, { method: 'POST' }); } catch(e) {}
         }
 
-        // Findings Logic
+        async function loadActivityFeed(pid) {
+            if(!pid) return;
+            try {
+                const [msgs, logs] = await Promise.all([
+                    apiFetch(`/api/agent_messages/${pid}`).then(r=>r.json()),
+                    apiFetch(`/api/logs/${pid}`).then(r=>r.json())
+                ]);
+                
+                const feed = [
+                    ...msgs.map(m => ({ time: m.timestamp, sender: m.sender_agent, receiver: m.receiver_agent, content: m.content, type: 'message' })),
+                    ...logs.map(l => ({ time: l.timestamp, sender: l.agent_name, receiver: null, content: l.decision + (l.output_data ? `: ${l.output_data.slice(0,60)}` : ''), type: 'log', status: l.result_status }))
+                ].sort((a,b) => new Date(a.time) - new Date(b.time));
+                
+                const agentColors = {
+                    'Orchestrator': 'text-cyan-400',
+                    'ReconAgent': 'text-blue-400',
+                    'ScannerAgent': 'text-red-400',
+                    'ValidatorAgent': 'text-green-400',
+                    'LearningAgent': 'text-purple-400',
+                    'ReportingAgent': 'text-yellow-400',
+                    'CouncilAgent': 'text-orange-400',
+                };
+                
+                const container = document.getElementById('activity-feed');
+                container.innerHTML = feed.slice(-30).map(item => {
+                    const color = agentColors[item.sender] || 'text-gray-400';
+                    const icon = item.type === 'message' ? '💬' : '⚡';
+                    const timeStr = new Date(item.time).toLocaleTimeString();
+                    const receiver = item.receiver ? ` → ${item.receiver}` : '';
+                    return `
+                        <div class="flex items-start space-x-2 text-xs mb-2 p-2 bg-gray-800 rounded">
+                            <span class="text-lg">${icon}</span>
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-1">
+                                    <span class="${color} font-bold">${item.sender}${receiver}</span>
+                                    <span class="text-gray-500">${timeStr}</span>
+                                </div>
+                                <div class="text-gray-300 break-words">${item.content}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                container.scrollTop = container.scrollHeight;
+            } catch(e) {}
+        }
+
         document.getElementById('findings-project-select').addEventListener('change', async (e) => {
             if(!e.target.value) return; const res = await apiFetch(`/api/findings/${e.target.value}`); const findings = await res.json();
             const tbody = document.getElementById('findings-table-body');
-            if(findings.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">No findings extracted yet.</td></tr>'; return; }
+            if(findings.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No findings extracted yet.</td></tr>'; return; }
             tbody.innerHTML = findings.map(f => {
-                let c = 'bg-gray-700 text-gray-300'; if(f.severity === 'Critical') c = 'bg-red-900 text-red-300'; else if(f.severity === 'High') c = 'bg-orange-900 text-orange-300'; else if(f.severity === 'Medium') c = 'bg-yellow-900 text-yellow-300';
-                let statusColor = 'text-gray-400'; if(f.status === 'Confirmed') statusColor = 'text-green-400 font-bold'; else if(f.status === 'False Positive') statusColor = 'text-red-400 line-through';
-                return `<tr class="hover:bg-gray-800"><td class="p-3"><span class="px-2 py-1 rounded ${c}">${f.severity}</span></td><td class="p-3 text-white">${f.title}</td><td class="p-3 text-gray-400">${f.target}</td><td class="p-3 text-gray-400">${f.tool}</td><td class="p-3 text-accent">${f.confidence}%</td><td class="p-3 ${statusColor}">${f.status}</td><td class="p-3 flex space-x-1"><button onclick="validateFindingAI(${f.id})" class="bg-accent text-black px-2 py-1 rounded text-xs">AI Check</button><button onclick="updateFindingStatus(${f.id}, 'Confirmed')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Confirm</button><button onclick="updateFindingStatus(${f.id}, 'False Positive')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">False +</button></td></tr>`;
+                let sevColor = 'bg-gray-700 text-gray-300'; 
+                if(f.severity === 'Critical') sevColor = 'bg-red-900 text-red-300'; 
+                else if(f.severity === 'High') sevColor = 'bg-orange-900 text-orange-300'; 
+                else if(f.severity === 'Medium') sevColor = 'bg-yellow-900 text-yellow-300';
+                let statusColor = 'text-gray-400'; 
+                if(f.status === 'Confirmed') statusColor = 'text-green-400 font-bold'; 
+                else if(f.status === 'False Positive') statusColor = 'text-red-400 line-through';
+                let cvssVal = f.cvss_score || 0.0;
+                let cvssColor = 'bg-blue-900 text-blue-300';
+                if(cvssVal >= 9.0) cvssColor = 'bg-red-900 text-red-300';
+                else if(cvssVal >= 7.0) cvssColor = 'bg-orange-900 text-orange-300';
+                else if(cvssVal >= 4.0) cvssColor = 'bg-yellow-900 text-yellow-300';
+                return `<tr class="hover:bg-gray-800">
+                    <td class="p-3"><span class="px-2 py-1 rounded ${sevColor}">${f.severity}</span></td>
+                    <td class="p-3 text-white">${f.title}</td>
+                    <td class="p-3 text-gray-400">${f.target}</td>
+                    <td class="p-3"><span class="px-2 py-1 rounded ${cvssColor}">${cvssVal.toFixed(1)}</span></td>
+                    <td class="p-3 ${statusColor}">${f.status}</td>
+                    <td class="p-3 flex space-x-1">
+                        <button onclick="validateFindingAI(${f.id})" class="bg-accent text-black px-2 py-1 rounded text-xs">AI Check</button>
+                        <button onclick="runCouncilReview(${f.id})" class="bg-purple-600 text-white px-2 py-1 rounded text-xs">Council</button>
+                        <button onclick="updateFindingStatus(${f.id}, 'Confirmed')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Confirm</button>
+                    </td>
+                </tr>`;
             }).join('');
         });
 
@@ -679,7 +823,6 @@
             try { const res = await apiFetch(`/api/ai/correlate/${pid}`); const data = await res.json(); document.getElementById('ai-output').innerText = data.correlation_report; } catch(e) { document.getElementById('ai-output').innerText = "Error."; }
         }
 
-        // OWASP Audit & Quality Gate
         async function runOwaspAudit() {
             const pid = document.getElementById('findings-project-select').value;
             if(!pid) return alert('Select project first');
@@ -717,8 +860,49 @@
             } catch(e) { out.innerText = "Error checking quality gate."; }
         }
 
+        // FEATURE 1: Validate All Findings JS
+        async function validateAll() {
+            const pid = document.getElementById('findings-project-select').value;
+            if(!pid) return alert('Select project');
+            const btn = event.target;
+            btn.innerText = "Validating..."; btn.disabled = true;
+            const res = await apiFetch(`/api/ai/validate-all/${pid}`, {method:'POST'});
+            const data = await res.json();
+            alert(`Done! Confirmed: ${data.confirmed}, FP removed: ${data.fp_removed}`);
+            btn.innerText = "🔍 Validate All"; btn.disabled = false;
+            document.getElementById('findings-project-select').dispatchEvent(new Event('change'));
+        }
+
+        async function loadAgentMessages() {
+            const pid = document.getElementById('agent-msg-project-select').value;
+            if(!pid) return alert('Select project first');
+            const out = document.getElementById('agent-msg-output');
+            out.innerHTML = '<p class="text-gray-500">Fetching messages...</p>';
+            try {
+                const res = await apiFetch(`/api/agent_messages/${pid}`);
+                const msgs = await res.json();
+                if(msgs.length === 0) {
+                    out.innerHTML = '<p class="text-gray-500">No messages yet. Run an autonomous scan.</p>';
+                    return;
+                }
+                out.innerHTML = msgs.map(m => `
+                    <div class="bg-gray-800 p-2 rounded">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-accent font-bold">${m.sender_agent} → ${m.receiver_agent}</span>
+                            <span class="text-gray-500">${m.message_type}</span>
+                        </div>
+                        <p class="text-gray-300">${m.content}</p>
+                    </div>
+                `).join('');
+            } catch(e) {
+                out.innerHTML = '<p class="text-red-400">Error fetching messages.</p>';
+            }
+        }
+
+        // FEATURE 4: AI Learnings fix
         async function loadAILearnings() {
-            const pid = document.getElementById('browser-project-select').value || 1; // Fallback to 1 if not selected
+            const pid = document.getElementById('agent-msg-project-select').value;
+            if(!pid) { alert('Select project first'); return; }
             const out = document.getElementById('learnings-output');
             out.innerText = "Fetching AI learnings...";
             try {
@@ -732,6 +916,31 @@
             } catch(e) { out.innerText = "Error fetching learnings."; }
         }
 
+        // FEATURE 2: Apply Learnings JS
+        async function applyLearningsAsScan() {
+            const pid = document.getElementById('exec-project-select').value;
+            if(!pid) { alert('Go to Command Center and select project first'); return; }
+            if(!confirm('Start autonomous scan using AI recommended tools?')) return;
+            
+            const res = await apiFetch(`/api/ai/learnings/${pid}`);
+            const data = await res.json();
+            const tools = data.next_scan_priority || data.recommended_next_tools || [];
+            
+            if(tools.length === 0) {
+                alert('No recommendations yet. Run a full scan first.');
+                return;
+            }
+            
+            // Get first asset as target
+            const assets = await (await apiFetch(`/api/assets/${pid}`)).json();
+            if(!assets.length) { alert('Add a target URL first'); return; }
+            const target = assets[0].name;
+            
+            await apiFetch(`/api/execute/autonomous/${pid}?target=${target}`, {method:'POST'});
+            alert(`Scan started! Tools: ${tools.join(', ')}`);
+            showView('tools');
+        }
+
         async function updateFindingStatus(id, status) {
             await apiFetch(`/api/findings/${id}?status=${status}`, { method: 'PUT' });
             document.getElementById('findings-project-select').dispatchEvent(new Event('change'));
@@ -742,6 +951,44 @@
             document.getElementById('ai-output').innerText = "AI is analyzing the raw evidence...";
             document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex');
             try { const res = await apiFetch(`/api/ai/validate/${id}`); const data = await res.json(); document.getElementById('ai-output').innerText = data.validation_result; } catch(e) { document.getElementById('ai-output').innerText = "Error."; }
+        }
+
+        async function runCouncilReview(id) {
+            document.getElementById('ai-modal-title').innerText = "🧠 Council Agent Review";
+            document.getElementById('ai-output').innerText = "Council is reviewing the finding...";
+            document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex');
+            try { 
+                const res = await apiFetch(`/api/council/${id}`, { method: 'POST' }); 
+                const data = await res.json();
+                let verdictColor = 'text-yellow-500';
+                if(data.council_verdict === 'EXPLOIT') verdictColor = 'text-red-500';
+                else if(data.council_verdict === 'PATCH_SOON') verdictColor = 'text-orange-500';
+                else if(data.council_verdict === 'CLOSE') verdictColor = 'text-green-500';
+                let html = `
+                    <div class="space-y-3 text-white">
+                        <div class="bg-red-900/50 p-3 rounded border border-red-700">
+                            <h4 class="text-red-400 font-bold mb-1">🔴 Red Team (Attacker)</h4>
+                            <p class="text-xs text-gray-300">${data.red_team || 'N/A'}</p>
+                        </div>
+                        <div class="bg-blue-900/50 p-3 rounded border border-blue-700">
+                            <h4 class="text-blue-400 font-bold mb-1">🔵 Blue Team (Defender)</h4>
+                            <p class="text-xs text-gray-300">${data.blue_team || 'N/A'}</p>
+                        </div>
+                        <div class="bg-green-900/50 p-3 rounded border border-green-700">
+                            <h4 class="text-green-400 font-bold mb-1">💼 Business Impact</h4>
+                            <p class="text-xs text-gray-300">${data.business || 'N/A'}</p>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded text-center mt-4">
+                            <span class="text-lg font-bold ${verdictColor}">
+                                Council Verdict: ${data.council_verdict || 'N/A'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('ai-output').innerHTML = html;
+            } catch(e) { 
+                document.getElementById('ai-output').innerText = "Error running council review."; 
+            }
         }
 
         async function loadIntelMap() {
@@ -763,9 +1010,6 @@
             await apiFetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({tool_timeout: timeout, max_retries: retries}) }); alert('Settings saved!');
         });
 
-        // ==========================================
-        // ELITE FEATURES JS (Adaptive, Browser, Plugin)
-        // ==========================================
         async function generateWordlist() {
             const target = document.getElementById('wordlist-target').value;
             if(!target) return alert('Enter target URL');

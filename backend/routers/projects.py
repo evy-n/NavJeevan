@@ -19,11 +19,34 @@ def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)
 def get_projects(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     return db.query(models.Project).all()
 
-@router.post("/assets/", response_model=schemas.AssetResponse)
-def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
-    db_asset = models.Asset(**asset.dict())
+# ==========================================
+# FEATURE 1: Target URLs Management
+# ==========================================
+
+class AssetCreate(BaseModel):
+    project_id: int
+    name: str
+    type: str = "domain"
+    status: str = "Active"
+
+@router.post("/assets/")
+def create_asset(asset: AssetCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    db_asset = models.Asset(project_id=asset.project_id, name=asset.name, type=asset.type, status=asset.status)
     db.add(db_asset); db.commit(); db.refresh(db_asset)
     return db_asset
+
+@router.get("/assets/{project_id}")
+def get_assets(project_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Asset).filter(models.Asset.project_id == project_id).all()
+
+@router.delete("/assets/{asset_id}")
+def delete_asset(asset_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+    if not asset: raise HTTPException(status_code=404, detail="Asset not found")
+    db.delete(asset); db.commit()
+    return {"status": "success"}
+
+# Existing CSV/Config Import Endpoints...
 
 @router.post("/import/csv/{project_id}")
 async def import_csv(project_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
@@ -85,8 +108,7 @@ def execute_task_from_checklist(task_id: int, db: Session = Depends(get_db), use
     if not asset: raise HTTPException(status_code=400, detail="No target asset found in project to scan.")
     target = asset.name
     task.status = "Running"; db.commit()
-    # Note: For simplicity, not backgrounding this specific call in this refactor,
-    # but it runs the plugin directly.
+    
     from core.plugin_manager import plugin_manager
     import asyncio
     plugin = plugin_manager.get_plugin(tool_name)

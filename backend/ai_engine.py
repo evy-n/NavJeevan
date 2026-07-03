@@ -14,10 +14,9 @@ class AIGateway:
             print("Warning: GROQ_API_KEY Not Configured in .env")
         else:
             self.client = Groq(api_key=GROQ_API_KEY)
-            # Multiple Models for different tasks
-            self.model_fast = "llama-3.1-8b-instant"      # Planning & Fast tasks
-            self.model_smart = "llama-3.3-70b-versatile"  # Analysis & Accuracy
-            self.model_deep = "mixtral-8x7b-32768"        # Attack Path & Large Context
+            self.model_fast = "llama-3.1-8b-instant"
+            self.model_smart = "llama-3.3-70b-versatile"
+            self.model_deep = "mixtral-8x7b-32768"
 
     def generate_workflow_plan(self, project_name: str, project_desc: str, assets: list):
         if not self.client: return "AI Not Configured"
@@ -40,14 +39,13 @@ class AIGateway:
             """
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model=self.model_fast # Using Fast Model
+                model=self.model_fast
             )
             clean_text = chat_completion.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
             parsed = json.loads(clean_text)
             
             valid_tools = ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau", "naabu"]
             if isinstance(parsed, list) and len(parsed) > 0:
-                # Always return list[str]
                 if isinstance(parsed[0], dict):
                     return [item.get("tool") for item in parsed if item.get("tool") in valid_tools][:3]
                 else:
@@ -57,13 +55,49 @@ class AIGateway:
             print(f"AI Decision Error: {e}. Using default plan.")
             return ["subfinder", "httpx", "nuclei"]
 
+    # BUG 3 FIX: New method to include past learnings context
+    def get_autonomous_plan_with_context(self, project_name: str, target: str, past_learnings: str):
+        if not self.client: return ["subfinder", "httpx", "nuclei"]
+        try:
+            prompt = f"""
+            You are an autonomous security planner.
+            Project: {project_name}
+            Target: {target}
+            
+            Past Learnings from previous scans:
+            {past_learnings if past_learnings else "No past learnings available."}
+            
+            Based on the target and past learnings, select 3 best tools to run from this list:
+            ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau", "naabu", "ffuf", "dalfox"]
+            
+            Output STRICTLY JSON array of strings. No markdown.
+            Example: ["subfinder", "httpx", "nuclei"]
+            """
+            chat_completion = self.client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model_fast
+            )
+            clean_text = chat_completion.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
+            parsed = json.loads(clean_text)
+            
+            valid_tools = ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau", "naabu", "ffuf", "dalfox"]
+            if isinstance(parsed, list) and len(parsed) > 0:
+                if isinstance(parsed[0], dict):
+                    return [item.get("tool") for item in parsed if item.get("tool") in valid_tools][:3]
+                else:
+                    return [t for t in parsed if t in valid_tools][:3]
+            return ["subfinder", "httpx", "nuclei"]
+        except Exception as e:
+            print(f"AI Context Plan Error: {e}. Using default plan.")
+            return ["subfinder", "httpx", "nuclei"]
+
     def generate_wordlist(self, target: str):
         if not self.client: return ["admin", "login", "api", "config"]
         try:
             prompt = f"Analyze target '{target}'. Generate 20 likely hidden directory names. Output strictly as JSON array of strings."
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model=self.model_fast # Using Fast Model
+                model=self.model_fast
             )
             clean_text = chat_completion.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
             return json.loads(clean_text)
@@ -74,7 +108,6 @@ class AIGateway:
         try:
             findings_text = "\n".join([f"- {f['tool']}: {f['title']} ({f['severity']})" for f in findings])
             prompt = f"Act as Elite Security Architect. Project: {project_name}\nFindings:\n{findings_text}\n1. Generate Attack Path. 2. Business Impact. 3. Risk Score /100."
-            # Using Deep Model for large context and complex reasoning
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model_deep
@@ -96,7 +129,6 @@ class AIGateway:
             Verdict: [True Positive / False Positive]
             Reason: [1-2 lines explaining why]
             """
-            # Using Smart Model for high accuracy analysis
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model_smart
@@ -129,7 +161,7 @@ class AIGateway:
             """
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model=self.model_smart # Using Smart Model for accurate categorization
+                model=self.model_smart
             )
             clean_text = chat_completion.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
             return json.loads(clean_text)
