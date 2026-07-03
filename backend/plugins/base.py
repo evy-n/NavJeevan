@@ -8,9 +8,10 @@ ACTIVE_PROCESSES = {}
 
 class BasePlugin(ABC):
     name: str = "unknown"
+    cmd_args: list = []
     
     @abstractmethod
-    async def execute(self, target: str, websocket=None) -> dict:
+    async def execute(self, target: str, websocket=None, auth: dict = None) -> dict:
         pass
 
     async def run_command(self, command_list, websocket=None):
@@ -19,7 +20,6 @@ class BasePlugin(ABC):
             if sys.platform == 'win32':
                 creation_flags = subprocess.CREATE_NO_WINDOW
                 
-            # BUG 2 FIX: shell=False to prevent Command Injection. Pass list directly.
             process = subprocess.Popen(
                 command_list,
                 stdout=subprocess.PIPE,
@@ -68,7 +68,7 @@ class BasePlugin(ABC):
                 
             if returncode == 0:
                 return {"status": "Completed", "output": "\n".join(output_lines)}
-            elif returncode == -9: # Killed by timer
+            elif returncode == -9:
                 return {"status": "TimedOut", "error": "Scan exceeded 5 min limit"}
             else:
                 err = process.stderr.read()
@@ -83,3 +83,39 @@ class BasePlugin(ABC):
             err_msg = f"Execution Error: {type(e).__name__} - {str(e)}"
             if websocket: await websocket.send_text(err_msg)
             return {"status": "Failed", "error": err_msg}
+
+class GenericPlugin(BasePlugin):
+    def __init__(self, name, cmd_args):
+        self.name = name
+        self.cmd_args = cmd_args
+        
+    async def execute(self, target: str, websocket=None, auth: dict = None) -> dict:
+        command = [arg.replace("{target}", target) for arg in self.cmd_args]
+        
+        # AUTH HEADERS INJECTION
+        if auth and auth.get("type") in ["cookie", "bearer"] and auth.get("value"):
+            header_val = ""
+            if auth["type"] == "cookie":
+                header_val = f"Cookie: {auth['value']}"
+            elif auth["type"] == "bearer":
+                header_val = f"Authorization: Bearer {auth['value']}"
+            
+            # Only add headers to HTTP-based tools that support -H flag
+            if self.name in ["httpx", "nuclei", "dalfox", "ffuf"]:
+                command.extend(["-H", header_val])
+        
+        result = await self.run_command(command, websocket)
+        
+        # Fallback logic
+        if result["status"] != "Completed" and self.name in FALLBACK_CONFIGS:
+            if websocket:
+                await websocket.send_text(f"[!] Fallback: Trying alternative command for {self.name}...")
+            fallback_cmd = [arg.replace("{target}", target) for arg in FALLBACK_CONFIGS[self.name]]
+            result = await self.run_command(fallback_cmd, websocket)
+            
+        return result
+
+FALLBACK_CONFIGS = {
+    "nmap": ["naabu", "-host", "{target}", "-silent"],
+    "subfinder": ["assetfinder", "{target}"]
+}

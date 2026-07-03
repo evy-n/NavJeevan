@@ -35,7 +35,6 @@ class AIGateway:
             You are an autonomous security planner. Target: {target}
             Select 3 tools from ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau"].
             Output STRICTLY JSON array of strings. No markdown.
-            Example: ["subfinder", "httpx", "nuclei"]
             """
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
@@ -43,7 +42,6 @@ class AIGateway:
             )
             clean_text = chat_completion.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
             parsed = json.loads(clean_text)
-            
             valid_tools = ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau", "naabu"]
             if isinstance(parsed, list) and len(parsed) > 0:
                 if isinstance(parsed[0], dict):
@@ -55,7 +53,6 @@ class AIGateway:
             print(f"AI Decision Error: {e}. Using default plan.")
             return ["subfinder", "httpx", "nuclei"]
 
-    # BUG 3 FIX: New method to include past learnings context
     def get_autonomous_plan_with_context(self, project_name: str, target: str, past_learnings: str):
         if not self.client: return ["subfinder", "httpx", "nuclei"]
         try:
@@ -63,7 +60,6 @@ class AIGateway:
             You are an autonomous security planner.
             Project: {project_name}
             Target: {target}
-            
             Past Learnings from previous scans:
             {past_learnings if past_learnings else "No past learnings available."}
             
@@ -71,7 +67,6 @@ class AIGateway:
             ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau", "naabu", "ffuf", "dalfox"]
             
             Output STRICTLY JSON array of strings. No markdown.
-            Example: ["subfinder", "httpx", "nuclei"]
             """
             chat_completion = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
@@ -79,7 +74,6 @@ class AIGateway:
             )
             clean_text = chat_completion.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
             parsed = json.loads(clean_text)
-            
             valid_tools = ["subfinder", "httpx", "nuclei", "nmap", "katana", "gau", "naabu", "ffuf", "dalfox"]
             if isinstance(parsed, list) and len(parsed) > 0:
                 if isinstance(parsed[0], dict):
@@ -167,5 +161,15 @@ class AIGateway:
             return json.loads(clean_text)
         except Exception as e:
             return {"error": f"AI Audit Error: {str(e)}"}
+
+    # NEW: Discord Notification Method
+    def send_discord_notification(self, webhook_url: str, message: str):
+        try:
+            import urllib.request
+            data = json.dumps({"content": message}).encode()
+            req = urllib.request.Request(webhook_url, data=data, headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=5)
+        except Exception as e:
+            print(f"Discord notify failed: {e}")
 
 ai_gateway = AIGateway()

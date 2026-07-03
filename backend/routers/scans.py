@@ -4,6 +4,7 @@ import asyncio
 import jwt
 from jwt.exceptions import InvalidTokenError
 import time
+import secrets
 import models
 from database import get_db, SessionLocal
 from core.dependencies import get_current_user, validate_target, SECRET_KEY, ALGORITHM
@@ -13,7 +14,6 @@ from plugins.base import ACTIVE_PROCESSES
 
 router = APIRouter(tags=["Scans & Execution"])
 
-# In-memory Rate Limiting
 scan_rate_limits = {}
 
 def check_rate_limit(project_id: int):
@@ -57,13 +57,10 @@ def execute_autonomous_scan(project_id: int, target: str, background_tasks: Back
     background_tasks.add_task(autonomous_worker, project_id, target)
     return {"status": "success", "message": "Autonomous State Machine Started."}
 
-# FIX 1: Added check_rate_limit to verify_poc endpoint
 @router.post("/api/verify-poc/{finding_id}")
 def verify_poc(finding_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     finding = db.query(models.Finding).filter(models.Finding.id == finding_id).first()
     if not finding: raise HTTPException(status_code=404, detail="Finding not found")
-    
-    # Apply rate limit based on the project ID associated with the finding
     check_rate_limit(finding.project_id)
     
     from agents.attack_agent import AttackAgent
@@ -71,6 +68,38 @@ def verify_poc(finding_id: int, db: Session = Depends(get_db), user: dict = Depe
     context = {"db": db, "single_finding_id": finding_id}
     result = agent.execute(finding.project_id, finding.target, context)
     return result
+
+# NEW: DevOps CI/CD Webhook Endpoint
+@router.post("/api/webhook/scan/{project_id}")
+async def devops_webhook(project_id: int, webhook_secret: str, background_tasks: BackgroundTasks, payload: dict = {}, db: Session = Depends(get_db)):
+    stored = db.query(models.Setting).filter(models.Setting.key == f"webhook_secret_{project_id}").first()
+    if not stored or stored.value != webhook_secret:
+        raise HTTPException(status_code=403, detail="Invalid webhook secret")
+    
+    asset = db.query(models.Asset).filter(models.Asset.project_id == project_id).first()
+    if not asset:
+        return {"error": "No target asset configured for this project"}
+    
+    db.add(models.DecisionLog(
+        project_id=project_id,
+        agent_name="DevOps-Webhook",
+        decision=f"CI/CD auto-scan triggered on {asset.name}",
+        reason=f"Source: {payload.get('ref', 'webhook')}",
+        result_status="Running"
+    ))
+    db.commit()
+    
+    background_tasks.add_task(autonomous_worker, project_id, asset.name)
+    return {"status": "scan_started", "target": asset.name, "project": project_id}
+
+# NEW: Test Discord Notification Endpoint
+@router.post("/api/test-discord")
+def test_discord(data: dict, user: dict = Depends(get_current_user)):
+    url = data.get("url")
+    if not url: raise HTTPException(status_code=400, detail="URL required")
+    from ai_engine import ai_gateway
+    ai_gateway.send_discord_notification(url, "🛡️ **NavJeevan Test Notification**\nDiscord integration is working successfully!")
+    return {"status": "success"}
 
 @router.websocket("/ws/terminal")
 async def websocket_terminal(websocket: WebSocket):
@@ -96,7 +125,7 @@ async def websocket_terminal(websocket: WebSocket):
                 continue
 
             pid = data.get("project_id"); target = data.get("target"); tool = data.get("tool")
-            check_rate_limit(pid) # Rate limit websocket too
+            check_rate_limit(pid)
             validate_target(target)
             await websocket.send_text(f"[~] Initializing {tool.upper()} for {target}...")
             

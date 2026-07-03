@@ -7,6 +7,7 @@ from database import get_db
 from core.dependencies import get_current_user
 import csv
 import json
+import io
 
 router = APIRouter(prefix="/api", tags=["Findings & Logs"])
 
@@ -14,58 +15,7 @@ router = APIRouter(prefix="/api", tags=["Findings & Logs"])
 def get_decision_logs(project_id: int, db: Session = Depends(get_db)):
     return db.query(DecisionLog).filter(DecisionLog.project_id == project_id).all()
 
-# FIX 4: Added user dependency
-@router.get("/findings/{project_id}")
-def get_findings(
-    project_id: int, 
-    severity: str = None, 
-    status: str = None, 
-    tool: str = None, 
-    limit: int = 100, 
-    offset: int = 0,
-    db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user) 
-):
-    query = db.query(Finding).filter(Finding.project_id == project_id)
-    if severity: query = query.filter(Finding.severity == severity)
-    if status: query = query.filter(Finding.status == status)
-    if tool: query = query.filter(Finding.tool == tool)
-    
-    total = query.count()
-    findings = query.offset(offset).limit(limit).all()
-    return {"total": total, "findings": findings}
-
-# FIX 4: Added user dependency
-@router.get("/findings/export/{project_id}")
-def export_findings(
-    project_id: int, 
-    format: str = "csv", 
-    db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user)
-):
-    findings = db.query(Finding).filter(Finding.project_id == project_id).all()
-    
-    if format == "json":
-        data = [{"id": f.id, "title": f.title, "severity": f.severity, "status": f.status, "target": f.target, "tool": f.tool} for f in findings]
-        return Response(content=json.dumps(data, indent=4), media_type="application/json", headers={"Content-Disposition": f"attachment; filename=findings_{project_id}.json"})
-    else:
-        output = [["ID", "Title", "Severity", "Status", "Target", "Tool"]]
-        for f in findings:
-            output.append([f.id, f.title, f.severity, f.status, f.target, f.tool])
-        
-        import io
-        si = io.StringIO()
-        cw = csv.writer(si)
-        cw.writerows(output)
-        return Response(content=si.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=findings_{project_id}.csv"})
-
-@router.put("/findings/{finding_id}")
-def update_finding_status(finding_id: int, status: str, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
-    finding = db.query(Finding).filter(Finding.id == finding_id).first()
-    if not finding: return {"status": "error", "message": "Not found"}
-    finding.status = status; db.commit()
-    return {"status": "success"}
-
+# FIX 1: Moved quality-gate route BEFORE /findings/{project_id}
 @router.get("/findings/quality-gate/{project_id}")
 def quality_gate(project_id: int, db: Session = Depends(get_db)):
     findings = db.query(Finding).filter(Finding.project_id == project_id).all()
@@ -83,6 +33,43 @@ def quality_gate(project_id: int, db: Session = Depends(get_db)):
             
     gate_passed = len(findings) >= 1 and avg_confidence >= 60 and all_have_evidence
     return {"findings_detected": len(findings), "all_have_evidence": all_have_evidence, "avg_confidence": avg_confidence, "confirmed_count": confirmed_count, "false_positive_count": false_positive_count, "gate_passed": gate_passed}
+
+# FIX 1: Moved export route BEFORE /findings/{project_id} as well to prevent collision
+@router.get("/findings/export/{project_id}")
+def export_findings(project_id: int, format: str = "csv", db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    findings = db.query(Finding).filter(Finding.project_id == project_id).all()
+    
+    if format == "json":
+        data = [{"id": f.id, "title": f.title, "severity": f.severity, "status": f.status, "target": f.target, "tool": f.tool} for f in findings]
+        return Response(content=json.dumps(data, indent=4), media_type="application/json", headers={"Content-Disposition": f"attachment; filename=findings_{project_id}.json"})
+    else:
+        output = [["ID", "Title", "Severity", "Status", "Target", "Tool"]]
+        for f in findings:
+            output.append([f.id, f.title, f.severity, f.status, f.target, f.tool])
+        
+        si = io.StringIO()
+        cw = csv.writer(si)
+        cw.writerows(output)
+        return Response(content=si.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=findings_{project_id}.csv"})
+
+# FIX 1: Dynamic route now placed at the end of the /findings/* routes
+@router.get("/findings/{project_id}")
+def get_findings(project_id: int, severity: str = None, status: str = None, tool: str = None, limit: int = 100, offset: int = 0, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    query = db.query(Finding).filter(Finding.project_id == project_id)
+    if severity: query = query.filter(Finding.severity == severity)
+    if status: query = query.filter(Finding.status == status)
+    if tool: query = query.filter(Finding.tool == tool)
+    
+    total = query.count()
+    findings = query.offset(offset).limit(limit).all()
+    return {"total": total, "findings": findings}
+
+@router.put("/findings/{finding_id}")
+def update_finding_status(finding_id: int, status: str, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    finding = db.query(Finding).filter(Finding.id == finding_id).first()
+    if not finding: return {"status": "error", "message": "Not found"}
+    finding.status = status; db.commit()
+    return {"status": "success"}
 
 @router.get("/global_logs")
 def get_global_logs(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):

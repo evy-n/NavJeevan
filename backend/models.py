@@ -10,7 +10,6 @@ class Project(Base):
     description = Column(Text, nullable=True)
     status = Column(String, default="Pending")
     created_at = Column(DateTime, default=datetime.utcnow)
-    # P2: Cascade delete added
     assets = relationship("Asset", back_populates="project", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     findings = relationship("Finding", back_populates="project", cascade="all, delete-orphan")
@@ -25,6 +24,9 @@ class Asset(Base):
     type = Column(String)
     status = Column(String, default="Active")
     source = Column(String, nullable=True)
+    # AUTH COLUMNS ADDED
+    auth_type = Column(String, nullable=True)  # "cookie"/"bearer"/"none"
+    auth_value = Column(Text, nullable=True)   # token/cookie string
     project = relationship("Project", back_populates="assets")
 
 class Task(Base):
@@ -65,7 +67,6 @@ class Finding(Base):
     owasp_category = Column(String, nullable=True)
     council_verdict = Column(String, nullable=True)
     last_seen = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    # FEATURE 3 & 4e: PoC and Tags columns
     poc_verified = Column(Boolean, default=False, nullable=True)
     poc_verification_notes = Column(Text, nullable=True)
     tags = Column(String, nullable=True)

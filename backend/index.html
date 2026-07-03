@@ -91,13 +91,11 @@
                     <span>Settings & Config</span>
                 </a>
             </nav>
-            
             <div class="p-4 border-t border-gray-800 text-xs text-gray-500 space-y-3">
                 <div>
                     <div class="flex justify-between mb-1"><span>System Health</span><span id="sidebar-health" class="text-green-400">0%</span></div>
                     <div class="w-full bg-gray-800 rounded-full h-1.5"><div id="sidebar-health-bar" class="bg-green-500 h-1.5 rounded-full transition-all" style="width: 0%"></div></div>
                 </div>
-                <!-- NEW LOGOUT BUTTON -->
                 <button onclick="logout()" class="w-full flex items-center justify-center space-x-2 text-red-400 hover:text-red-300 hover:bg-gray-800 py-2 rounded transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     <span class="font-medium">Sign Out</span>
@@ -358,11 +356,46 @@
             <!-- SETTINGS VIEW -->
             <div id="view-settings" class="view-section hidden p-6">
                 <h2 class="text-2xl font-bold text-white mb-6">System Settings & Configurations</h2>
-                <div class="bg-card rounded-xl border border-gray-800 p-6 max-w-lg">
+                
+                <!-- Existing Settings Form -->
+                <div class="bg-card rounded-xl border border-gray-800 p-6 mb-6">
+                    <h3 class="text-sm font-semibold text-white uppercase mb-4">Execution Settings</h3>
                     <form id="settings-form" class="space-y-4">
                         <div><label class="block text-sm text-gray-400 mb-1">Tool Execution Timeout (Seconds)</label><input type="number" id="setting-timeout" class="w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm"></div>
                         <div><label class="block text-sm text-gray-400 mb-1">Max Retries on Failure</label><input type="number" id="setting-retries" class="w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm"></div>
                         <button type="submit" class="bg-accent text-black px-4 py-2 rounded text-sm font-bold">Save Settings</button>
+                    </form>
+                </div>
+
+                <!-- NEW: Webhook Config -->
+                <div class="bg-card rounded-xl border border-gray-800 p-6 mb-6">
+                    <h3 class="text-sm font-semibold text-white uppercase mb-4">DevOps CI/CD Webhook</h3>
+                    <div class="flex space-x-2 mb-4">
+                        <select id="webhook-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-2 text-sm w-1/2"><option value="">Select Project</option></select>
+                        <button onclick="generateWebhookSecret()" class="bg-primary text-white px-4 py-2 rounded text-sm font-medium">Generate Secret & URL</button>
+                    </div>
+                    <div id="webhook-url-box" class="hidden bg-gray-800 p-4 rounded-lg border border-gray-700">
+                        <p class="text-xs text-gray-400 mb-2">Your Webhook URL (Add this to GitHub Actions / Jenkins):</p>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="webhook-url-display" readonly class="flex-1 bg-gray-900 text-accent text-xs p-2 rounded border border-gray-600">
+                            <button onclick="copyWebhookUrl()" class="bg-gray-600 text-white px-3 py-2 rounded text-xs">Copy</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-3">Instructions:<br>Add a step in your CI/CD pipeline: <code class="bg-gray-900 p-1 rounded text-accent">curl -X POST '{URL}'</code></p>
+                    </div>
+                </div>
+
+                <!-- NEW: Discord Notifications -->
+                <div class="bg-card rounded-xl border border-gray-800 p-6">
+                    <h3 class="text-sm font-semibold text-white uppercase mb-4">Discord Notifications</h3>
+                    <form id="discord-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Discord Webhook URL</label>
+                            <input type="text" id="discord-webhook-input" placeholder="https://discord.com/api/webhooks/..." class="w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button type="submit" class="bg-accent text-black px-4 py-2 rounded text-sm font-bold">Save</button>
+                            <button type="button" onclick="testDiscordWebhook()" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-medium">Test Notification</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -392,10 +425,46 @@
             <div id="ai-output" class="text-gray-300 text-sm whitespace-pre-wrap font-mono bg-gray-800 p-4 rounded"></div>
         </div>
     </div>
+    
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-gray-900 w-1/3 p-6 rounded-xl border border-gray-700 shadow-xl">
+            <h3 class="text-xl font-bold text-white mb-4">Set Authentication</h3>
+            <form id="auth-form" class="space-y-4">
+                <input type="hidden" id="auth-asset-id">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Auth Type</label>
+                    <select id="auth-type-select" class="w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm">
+                        <option value="none">None</option>
+                        <option value="cookie">Cookie</option>
+                        <option value="bearer">Bearer Token</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Token / Cookie Value</label>
+                    <textarea id="auth-value-input" rows="3" placeholder="Paste cookie or token here..." class="w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" onclick="document.getElementById('auth-modal').classList.add('hidden')" class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancel</button>
+                    <button type="submit" class="bg-accent text-black px-4 py-2 rounded text-sm font-bold">Save Auth</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         let authToken = localStorage.getItem('navjeevan_token');
         let toolCategories = {}; 
+
+        // Toast Notification System
+        function showToast(msg, type='info') {
+            const colors = {error:'bg-red-700', success:'bg-green-700', warn:'bg-yellow-700', info:'bg-blue-700'};
+            const t = document.createElement('div');
+            t.className = `fixed bottom-4 right-4 z-[100] ${colors[type] || colors.info} text-white px-4 py-3 rounded-lg shadow-xl text-sm max-w-sm`;
+            t.innerHTML = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
 
         async function apiFetch(url, options = {}) {
             if (!options.headers) options.headers = {};
@@ -423,7 +492,7 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 initApp();
-            } else { alert('Invalid credentials! Use admin / navjeevan'); }
+            } else { showToast('Invalid credentials! Use admin / navjeevan', 'error'); }
         });
 
         if (authToken) {
@@ -537,7 +606,7 @@
         async function loadProjects() {
             const res = await apiFetch('/api/projects/'); const projects = await res.json();
             const list = document.getElementById('project-list');
-            const selects = ['task-project-select', 'exec-project-select', 'findings-project-select', 'map-project-select', 'csv-project-select', 'browser-project-select', 'agent-msg-project-select', 'feed-project-select'];
+            const selects = ['task-project-select', 'exec-project-select', 'findings-project-select', 'map-project-select', 'csv-project-select', 'browser-project-select', 'agent-msg-project-select', 'feed-project-select', 'webhook-project-select'];
             list.innerHTML = '';
             selects.forEach(id => { document.getElementById(id).innerHTML = '<option value="">Select Project</option>'; });
             if (projects.length === 0) { list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No projects yet.</p>'; return; }
@@ -591,7 +660,7 @@
 
         async function deleteProject(pid, pname) {
             const conf = prompt(`To delete this project and ALL its data, type the project name exactly: ${pname}`);
-            if(conf !== pname) { alert('Project name did not match. Delete cancelled.'); return; }
+            if(conf !== pname) { showToast('Project name did not match. Delete cancelled.', 'warn'); return; }
             await apiFetch(`/api/projects/${pid}`, { method: 'DELETE' });
             loadProjects(); loadSystemHealth();
         }
@@ -605,11 +674,11 @@
         async function uploadCSV() {
             const pid = document.getElementById('csv-project-select').value;
             const fileInput = document.getElementById('csv-file-input');
-            if(!pid || !fileInput.files[0]) return alert('Select project and file');
+            if(!pid || !fileInput.files[0]) { showToast('Select project and file', 'warn'); return; }
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
             const res = await apiFetch(`/api/import/csv/${pid}`, { method: 'POST', body: formData });
-            const data = await res.json(); alert(data.message); loadProjectAssets(pid);
+            const data = await res.json(); showToast(data.message, 'success'); loadProjectAssets(pid);
         }
 
         async function loadProjectAssets(pid) {
@@ -620,18 +689,36 @@
                 if(assets.length === 0) { list.innerHTML = '<p class="text-gray-500 text-xs">No targets added yet.</p>'; return; }
                 list.innerHTML = assets.map(a => `
                     <div class="flex items-center justify-between bg-gray-700 p-2 rounded text-xs">
-                        <span class="text-gray-300 truncate flex-1">${a.name}</span>
+                        <span class="text-gray-300 truncate flex-1">${a.name} ${a.auth_type && a.auth_type !== 'none' ? '🔒' : ''}</span>
                         <span class="text-gray-500 ml-2 px-1 bg-gray-800 rounded">${a.type}</span>
+                        <button onclick="openAuthModal(${a.id})" class="text-blue-400 hover:text-blue-300 ml-2 text-[10px]">Set Auth</button>
                         <button onclick="deleteProjectAsset(${a.id}, ${pid})" class="text-red-400 hover:text-red-300 ml-2 font-bold">X</button>
                     </div>
                 `).join('');
             } catch(e) {}
         }
 
+        function openAuthModal(assetId) {
+            document.getElementById('auth-asset-id').value = assetId;
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-modal').classList.add('flex');
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('auth-asset-id').value;
+            const type = document.getElementById('auth-type-select').value;
+            const value = document.getElementById('auth-value-input').value;
+            await apiFetch(`/api/assets/${id}/auth`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({auth_type: type, auth_value: value}) });
+            document.getElementById('auth-modal').classList.add('hidden');
+            showToast('Authentication saved successfully!', 'success');
+            loadProjects();
+        });
+
         async function addProjectAsset(pid) {
             const name = document.getElementById(`asset-name-${pid}`).value;
             const type = document.getElementById(`asset-type-${pid}`).value;
-            if(!name) return alert('Enter URL or IP');
+            if(!name) { showToast('Enter URL or IP', 'warn'); return; }
             await apiFetch('/api/assets/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({project_id: pid, name, type, status: "Active"}) });
             document.getElementById(`asset-name-${pid}`).value = '';
             loadProjectAssets(pid);
@@ -644,7 +731,7 @@
 
         async function generateSmartPlan(pid) {
             const context = document.getElementById(`mission-context-${pid}`).value;
-            if(!context) return alert('Please enter mission context.');
+            if(!context) { showToast('Please enter mission context.', 'warn'); return; }
             document.getElementById('ai-modal-title').innerText = "🧠 AI Smart Plan";
             document.getElementById('ai-output').innerText = "Generating context-aware plan...";
             document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex');
@@ -657,7 +744,7 @@
 
         async function generatePlanUI() {
             const pid = document.getElementById('task-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             document.getElementById('ai-modal-title').innerText = "AI Master Planner";
             document.getElementById('ai-output').innerText = "Generating Master Plan & Creating Checklist...";
             document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex');
@@ -730,8 +817,16 @@
         async function executeScan() {
             const pid = document.getElementById('exec-project-select').value;
             const target = document.getElementById('exec-target-input').value;
-            const tool = document.getElementById('selected-tool').value;
-            if(!pid || !target) return alert('Select project and target');
+            const toolName = document.getElementById('selected-tool').value;
+            if(!pid || !target) { showToast('Select project and target', 'warn'); return; }
+            
+            // Tool Health Check
+            const tools = await apiFetch('/api/tools/status').then(r=>r.json());
+            const toolStatus = tools.find(t=>t.name===toolName);
+            if(toolStatus?.status === 'Missing') {
+                showToast(`⚠️ ${toolName} not installed!`, 'warn'); return;
+            }
+
             const out = document.getElementById('exec-output');
             out.innerText = ''; out.className = "text-green-400 text-xs whitespace-pre-wrap font-mono";
             document.getElementById('btn-exec').classList.add('hidden');
@@ -740,8 +835,8 @@
             ws = new WebSocket(`ws://${window.location.host}/ws/terminal`);
             
             ws.onopen = () => { 
-                ws.send(JSON.stringify({token: authToken})); // Send Auth first
-                ws.send(JSON.stringify({project_id: parseInt(pid), target, tool})); 
+                ws.send(JSON.stringify({token: authToken})); 
+                ws.send(JSON.stringify({project_id: parseInt(pid), target, tool: toolName})); 
             };
             ws.onmessage = (event) => { out.innerText += event.data + '\n'; out.scrollTop = out.scrollHeight; };
             ws.onerror = () => { out.innerText += "\n[Error] Connection lost."; out.className = "text-red-400 text-xs whitespace-pre-wrap font-mono"; };
@@ -757,7 +852,7 @@
 
         async function executeAutonomousScan() {
             const pid = document.getElementById('exec-project-select').value; const target = document.getElementById('exec-target-input').value;
-            if(!pid || !target) return alert('Select project and target');
+            if(!pid || !target) { showToast('Select project and target', 'warn'); return; }
             const out = document.getElementById('exec-output');
             out.innerText = `[🤖] Multi-Agent Autonomous scan started! Check Master Plan & Logs for progress.`;
             out.className = "text-green-400 text-xs whitespace-pre-wrap font-mono";
@@ -832,23 +927,23 @@
 
         async function exportFindings(format) {
             const pid = document.getElementById('findings-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             window.open(`/api/findings/export/${pid}?format=${format}`, '_blank');
         }
 
         async function verifyPoC(id) {
-            alert("Attempting safe PoC verification...");
+            showToast("Attempting safe PoC verification...", 'info');
             try {
                 const res = await apiFetch(`/api/verify-poc/${id}`, { method: 'POST' });
                 const data = await res.json();
-                alert(`Verification complete. Verified: ${data.verified}`);
+                showToast(`Verification complete. Verified: ${data.verified}`, 'success');
                 loadFindings();
-            } catch(e) { alert("Error verifying PoC."); }
+            } catch(e) { showToast("Error verifying PoC.", 'error'); }
         }
 
         async function downloadPDF() {
             const pid = document.getElementById('findings-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             const res = await apiFetch(`/api/reports/pdf/${pid}`);
             const blob = await res.blob(); const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `report_${pid}.pdf`; document.body.appendChild(a); a.click(); a.remove();
@@ -856,7 +951,7 @@
 
         async function generateAttackPath() {
             const pid = document.getElementById('findings-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             document.getElementById('ai-modal-title').innerText = "🧠 AI Attack Path & Correlation Engine";
             document.getElementById('ai-output').innerText = "Analyzing all findings...";
             document.getElementById('ai-modal').classList.remove('hidden'); document.getElementById('ai-modal').classList.add('flex');
@@ -865,7 +960,7 @@
 
         async function runOwaspAudit() {
             const pid = document.getElementById('findings-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             const box = document.getElementById('owasp-results-box');
             const out = document.getElementById('owasp-output');
             box.classList.remove('hidden');
@@ -879,7 +974,7 @@
 
         async function checkQualityGate() {
             const pid = document.getElementById('findings-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             const box = document.getElementById('quality-gate-box');
             const out = document.getElementById('quality-gate-output');
             box.classList.remove('hidden');
@@ -893,19 +988,19 @@
 
         async function validateAll() {
             const pid = document.getElementById('findings-project-select').value;
-            if(!pid) return alert('Select project');
+            if(!pid) { showToast('Select project', 'warn'); return; }
             const btn = event.target;
             btn.innerText = "Validating..."; btn.disabled = true;
             const res = await apiFetch(`/api/ai/validate-all/${pid}`, {method:'POST'});
             const data = await res.json();
-            alert(`Done! Confirmed: ${data.confirmed}, FP removed: ${data.fp_removed}`);
+            showToast(`Done! Confirmed: ${data.confirmed}, FP removed: ${data.fp_removed}`, 'success');
             btn.innerText = "🔍 Validate All"; btn.disabled = false;
             loadFindings();
         }
 
         async function loadAgentMessages() {
             const pid = document.getElementById('agent-msg-project-select').value;
-            if(!pid) return alert('Select project first');
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             const out = document.getElementById('agent-msg-output');
             out.innerHTML = '<p class="text-gray-500">Fetching messages...</p>';
             try {
@@ -918,7 +1013,7 @@
 
         async function loadAILearnings() {
             const pid = document.getElementById('agent-msg-project-select').value;
-            if(!pid) { alert('Select project first'); return; }
+            if(!pid) { showToast('Select project first', 'warn'); return; }
             const out = document.getElementById('learnings-output');
             out.innerText = "Fetching AI learnings...";
             try {
@@ -930,17 +1025,17 @@
 
         async function applyLearningsAsScan() {
             const pid = document.getElementById('exec-project-select').value;
-            if(!pid) { alert('Go to Command Center and select project first'); return; }
+            if(!pid) { showToast('Go to Command Center and select project first', 'warn'); return; }
             if(!confirm('Start autonomous scan using AI recommended tools?')) return;
             const res = await apiFetch(`/api/ai/learnings/${pid}`);
             const data = await res.json();
             const tools = data.next_scan_priority || data.recommended_next_tools || [];
-            if(tools.length === 0) { alert('No recommendations yet. Run a full scan first.'); return; }
+            if(tools.length === 0) { showToast('No recommendations yet. Run a full scan first.', 'warn'); return; }
             const assets = await (await apiFetch(`/api/assets/${pid}`)).json();
-            if(!assets.length) { alert('Add a target URL first'); return; }
+            if(!assets.length) { showToast('Add a target URL first', 'warn'); return; }
             const target = assets[0].name;
             await apiFetch(`/api/execute/autonomous/${pid}?target=${target}`, {method:'POST'});
-            alert(`Scan started! Tools: ${tools.join(', ')}`);
+            showToast(`Scan started! Tools: ${tools.join(', ')}`, 'success');
             showView('tools');
         }
 
@@ -968,7 +1063,7 @@
         }
 
         async function loadIntelMap() {
-            const pid = document.getElementById('map-project-select').value; if(!pid) return alert('Select project');
+            const pid = document.getElementById('map-project-select').value; if(!pid) { showToast('Select project', 'warn'); return; }
             const data = await (await apiFetch(`/api/intelligence-map/${pid}`)).json();
             const options = { nodes: { shape: 'dot', size: 16, font: { color: '#ffffff' } }, edges: { color: '#374151' }, groups: { project: { color: '#3b82f6' }, asset: { color: '#10b981' }, task: { color: '#f59e0b' }, log: { color: '#ef4444' } } };
             new vis.Network(document.getElementById('intel-map'), data, options);
@@ -983,12 +1078,47 @@
         }
         document.getElementById('settings-form').addEventListener('submit', async (e) => {
             e.preventDefault(); const timeout = document.getElementById('setting-timeout').value; const retries = document.getElementById('setting-retries').value;
-            await apiFetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({tool_timeout: timeout, max_retries: retries}) }); alert('Settings saved!');
+            await apiFetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({tool_timeout: timeout, max_retries: retries}) }); showToast('Settings saved!', 'success');
         });
+
+        // NEW: Webhook & Discord JS
+        async function generateWebhookSecret() {
+            const pid = document.getElementById('webhook-project-select').value;
+            if(!pid) { showToast('Select project first', 'warn'); return; }
+            const secret = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+            await apiFetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({[`webhook_secret_${pid}`]: secret}) });
+            const url = `${window.location.origin}/api/webhook/scan/${pid}?webhook_secret=${secret}`;
+            document.getElementById('webhook-url-display').value = url;
+            document.getElementById('webhook-url-box').classList.remove('hidden');
+            showToast('Webhook secret generated!', 'success');
+        }
+
+        function copyWebhookUrl() {
+            const input = document.getElementById('webhook-url-display');
+            input.select();
+            document.execCommand('copy');
+            showToast('Webhook URL copied to clipboard!', 'success');
+        }
+
+        document.getElementById('discord-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('discord-webhook-input').value;
+            await apiFetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({discord_webhook_url: url}) });
+            showToast('Discord Webhook URL saved!', 'success');
+        });
+
+        async function testDiscordWebhook() {
+            const url = document.getElementById('discord-webhook-input').value;
+            if(!url) { showToast('Enter URL first', 'warn'); return; }
+            try {
+                const res = await apiFetch('/api/test-discord', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url}) });
+                if(res.ok) showToast('Test notification sent!', 'success');
+            } catch(e) { showToast('Failed to send test notification', 'error'); }
+        }
 
         async function generateWordlist() {
             const target = document.getElementById('wordlist-target').value;
-            if(!target) return alert('Enter target URL');
+            if(!target) { showToast('Enter target URL', 'warn'); return; }
             const out = document.getElementById('wordlist-output');
             out.innerText = "AI is analyzing target and generating wordlist...";
             try { const res = await apiFetch(`/api/ai/wordlist/${target}`); const data = await res.json(); out.innerText = data.wordlist.join('\n'); } catch(e) { out.innerText = "Error generating wordlist."; }
@@ -997,24 +1127,24 @@
         async function runBrowserIntel() {
             const pid = document.getElementById('browser-project-select').value;
             const target = document.getElementById('browser-target').value;
-            if(!pid || !target) return alert('Select project and target');
-            alert("Starting Headless Browser... This may take 10-20 seconds.");
+            if(!pid || !target) { showToast('Select project and target', 'warn'); return; }
+            showToast("Starting Headless Browser... This may take 10-20 seconds.", 'info');
             try {
                 const res = await apiFetch(`/api/browser/intelligence/${pid}?target=${target}`, { method: 'POST' });
                 const data = await res.json();
-                if(data.status === 'success') alert(`Scan complete. Title: ${data.title}`);
-                else alert(`Scan failed: ${data.error}`);
-            } catch(e) { alert("Error running browser intel."); }
+                if(data.status === 'success') showToast(`Scan complete. Title: ${data.title}`, 'success');
+                else showToast(`Scan failed: ${data.error}`, 'error');
+            } catch(e) { showToast("Error running browser intel.", 'error'); }
         }
 
         async function uploadPlugin() {
             const fileInput = document.getElementById('plugin-file-input');
-            if(!fileInput.files[0]) return alert('Select a .py plugin file');
+            if(!fileInput.files[0]) { showToast('Select a .py plugin file', 'warn'); return; }
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
             const res = await apiFetch('/api/plugins/upload', { method: 'POST', body: formData });
             const data = await res.json();
-            alert(data.message);
+            showToast(data.message, 'success');
         }
     </script>
 </body>
