@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 import csv
 import models, schemas
@@ -8,6 +8,10 @@ from database import get_db
 from core.dependencies import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Projects & Tasks"])
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 @router.post("/projects/", response_model=schemas.ProjectResponse)
 def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
@@ -19,10 +23,29 @@ def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)
 def get_projects(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     return db.query(models.Project).all()
 
-# ==========================================
-# FEATURE 1: Target URLs Management
-# ==========================================
+# FEATURE 1: Project Rename
+@router.patch("/projects/{project_id}", response_model=schemas.ProjectResponse)
+def rename_project(project_id: int, data: ProjectUpdate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not project: raise HTTPException(status_code=404, detail="Project not found")
+    
+    if data.name: project.name = data.name
+    if data.description is not None: project.description = data.description
+    db.commit(); db.refresh(project)
+    return project
 
+# FEATURE 2: Project Delete with Cascade
+@router.delete("/projects/{project_id}")
+def delete_project(project_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not project: raise HTTPException(status_code=404, detail="Project not found")
+    
+    # SQLAlchemy cascade="all, delete-orphan" will handle related tables automatically
+    db.delete(project)
+    db.commit()
+    return {"status": "success", "message": "Project and all related data deleted"}
+
+# Asset Endpoints
 class AssetCreate(BaseModel):
     project_id: int
     name: str
@@ -46,8 +69,6 @@ def delete_asset(asset_id: int, db: Session = Depends(get_db), user: dict = Depe
     db.delete(asset); db.commit()
     return {"status": "success"}
 
-# Existing CSV/Config Import Endpoints...
-
 @router.post("/import/csv/{project_id}")
 async def import_csv(project_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     content = await file.read()
@@ -64,21 +85,7 @@ async def import_csv(project_id: int, file: UploadFile = File(...), db: Session 
     db.commit()
     return {"status": "success", "message": f"Imported {count} targets"}
 
-@router.post("/import/config/{project_id}")
-async def import_config_file(project_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
-    content = await file.read()
-    file_str = content.decode("utf-8")
-    lines = file_str.splitlines()
-    count = 0
-    for line in lines:
-        target = line.strip().replace('"', '').replace(',', '')
-        if target and not target.startswith("#"):
-            db_asset = models.Asset(project_id=project_id, name=target, type="Config_Target", status="Active")
-            db.add(db_asset)
-            count += 1
-    db.commit()
-    return {"status": "success", "message": f"Extracted {count} targets from Config File"}
-
+# Task Endpoints
 class TaskStatusUpdate(BaseModel):
     status: str
 
@@ -98,32 +105,3 @@ def update_task_status(task_id: int, status_update: TaskStatusUpdate, db: Sessio
     if not task: raise HTTPException(status_code=404, detail="Task not found")
     task.status = status_update.status; db.commit()
     return {"status": "success"}
-
-@router.post("/tasks/execute/{task_id}")
-def execute_task_from_checklist(task_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
-    if not task: raise HTTPException(status_code=404, detail="Task not found")
-    tool_name = task.name.replace("Run ", "").replace(" Scan", "").lower()
-    asset = db.query(models.Asset).filter(models.Asset.project_id == task.project_id).first()
-    if not asset: raise HTTPException(status_code=400, detail="No target asset found in project to scan.")
-    target = asset.name
-    task.status = "Running"; db.commit()
-    
-    from core.plugin_manager import plugin_manager
-    import asyncio
-    plugin = plugin_manager.get_plugin(tool_name)
-    if plugin:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        scan_result = loop.run_until_complete(plugin.execute(target))
-        loop.close()
-        if scan_result["status"] == "Completed" and scan_result.get("output"):
-            from services.scan_service import parse_and_create_findings
-            parse_and_create_findings(db, task.project_id, target, tool_name, scan_result["output"])
-            task.status = "Completed"
-        else:
-            task.status = "Failed"
-    else:
-        task.status = "Failed"
-    db.commit()
-    return {"status": "success", "message": f"Executed {tool_name}"}

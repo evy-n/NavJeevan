@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Float, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -10,8 +10,12 @@ class Project(Base):
     description = Column(Text, nullable=True)
     status = Column(String, default="Pending")
     created_at = Column(DateTime, default=datetime.utcnow)
-    assets = relationship("Asset", back_populates="project")
-    tasks = relationship("Task", back_populates="project")
+    # P2: Cascade delete added
+    assets = relationship("Asset", back_populates="project", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    findings = relationship("Finding", back_populates="project", cascade="all, delete-orphan")
+    logs = relationship("DecisionLog", back_populates="project", cascade="all, delete-orphan")
+    messages = relationship("AgentMessage", back_populates="project", cascade="all, delete-orphan")
 
 class Asset(Base):
     __tablename__ = "assets"
@@ -43,6 +47,7 @@ class DecisionLog(Base):
     result_status = Column(String, default="Pending")
     output_data = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="logs")
 
 class Finding(Base):
     __tablename__ = "findings"
@@ -56,11 +61,15 @@ class Finding(Base):
     confidence = Column(Integer, default=0)
     raw_data = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # BUG 1 FIX: 3 New Columns added
     cvss_score = Column(Float, nullable=True, default=0.0)
     owasp_category = Column(String, nullable=True)
     council_verdict = Column(String, nullable=True)
+    last_seen = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # FEATURE 3 & 4e: PoC and Tags columns
+    poc_verified = Column(Boolean, default=False, nullable=True)
+    poc_verification_notes = Column(Text, nullable=True)
+    tags = Column(String, nullable=True)
+    project = relationship("Project", back_populates="findings")
 
 class Evidence(Base):
     __tablename__ = "evidence"
@@ -91,3 +100,4 @@ class AgentMessage(Base):
     message_type = Column(String)
     content = Column(Text)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    project = relationship("Project", back_populates="messages")

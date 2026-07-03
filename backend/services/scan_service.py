@@ -5,10 +5,22 @@ import models
 from models import Finding, Evidence, DecisionLog
 from ai_engine import ai_gateway
 from core.plugin_manager import plugin_manager
+from datetime import datetime, timedelta
 
+# P2.7: Added deduplication logic
 def parse_and_create_findings(db, project_id, target, tool, output_text):
     findings_count = 0
     objects_to_add = []
+    
+    time_threshold = datetime.utcnow() - timedelta(hours=24)
+    existing_findings = db.query(Finding).filter(
+        Finding.project_id == project_id,
+        Finding.target == target,
+        Finding.tool == tool,
+        Finding.created_at >= time_threshold
+    ).all()
+    existing_map = {f.title: f for f in existing_findings}
+    
     for line in output_text.split('\n'):
         if not line.strip(): continue
         severity = "Info"; title = line.strip(); confidence = 50
@@ -26,8 +38,17 @@ def parse_and_create_findings(db, project_id, target, tool, output_text):
             else: continue
         
         if len(title) > 5:
-            finding = Finding(project_id=project_id, target=target, tool=tool, title=title[:255], severity=severity, confidence=confidence, raw_data=line, status="Auto-Detected")
-            objects_to_add.append(finding)
+            # If finding exists, update it instead of creating duplicate
+            if title in existing_map:
+                f = existing_map[title]
+                f.last_seen = datetime.utcnow()
+                if confidence > f.confidence:
+                    f.confidence = confidence
+                if severity != "Info" and f.severity == "Info":
+                    f.severity = severity
+            else:
+                finding = Finding(project_id=project_id, target=target, tool=tool, title=title[:255], severity=severity, confidence=confidence, raw_data=line, status="Auto-Detected")
+                objects_to_add.append(finding)
             
     db.add_all(objects_to_add)
     db.commit()

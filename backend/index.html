@@ -141,7 +141,7 @@
                     </div>
                 </div>
                 
-                <!-- FEATURE 2: Live Activity Feed -->
+                <!-- Live Activity Feed -->
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mt-6">
                     <h3 class="text-sm font-semibold text-white uppercase mb-3 flex items-center space-x-2">
                         <svg class="w-4 h-4 text-accent animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -193,7 +193,7 @@
                         <div class="flex space-x-2">
                             <select id="task-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/3"><option value="">Select Project</option></select>
                             <button onclick="generatePlanUI()" class="bg-accent text-black px-3 py-1.5 rounded text-xs font-bold flex items-center space-x-1">
-                                <svg class="w-4 h-4" fill="none, stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 <span>Generate AI Plan</span>
                             </button>
                         </div>
@@ -207,8 +207,7 @@
                 <h2 class="text-2xl font-bold text-white mb-6">Command Center (120+ Tools Ecosystem)</h2>
                 <div class="bg-card rounded-xl border border-gray-800 p-4">
                     <div class="flex space-x-2 mb-3 relative">
-                        <select id="exec-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/4"><option value="">Select Project</option></select>
-                        <!-- FEATURE 3: Bug Bounty Mode -->
+                        <select id="exec-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/5"><option value="">Select Project</option></select>
                         <select id="bounty-mode" onchange="updateBountyMode()" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/5">
                             <option value="default">Default Mode</option>
                             <option value="web2">Web2 / HackerOne</option>
@@ -233,7 +232,6 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-white">Findings & Evidence</h2>
                     <div class="flex space-x-2 flex-wrap gap-2">
-                        <!-- FEATURE 1: Validate All -->
                         <button onclick="validateAll()" class="bg-yellow-600 text-white px-4 py-2 rounded text-sm font-medium">🔍 Validate All</button>
                         <button onclick="generateAttackPath()" class="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium animate-pulse">🧠 Attack Path</button>
                         <button onclick="runOwaspAudit()" class="bg-orange-600 text-white px-4 py-2 rounded text-sm font-medium">🛡️ OWASP Audit</button>
@@ -250,15 +248,25 @@
                     <div id="quality-gate-output" class="text-xs text-gray-300"></div>
                 </div>
                 <div class="bg-card rounded-xl border border-gray-800 p-4">
-                    <div class="flex space-x-2 mb-4">
-                        <select id="findings-project-select" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/3"><option value="">Select Project</option></select>
+                    <div class="flex space-x-2 mb-4 flex-wrap gap-2">
+                        <select id="findings-project-select" onchange="loadFindings()" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/4"><option value="">Select Project</option></select>
+                        <select id="filter-severity" onchange="loadFindings()" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/6">
+                            <option value="">All Severities</option>
+                            <option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+                        </select>
+                        <select id="filter-status" onchange="loadFindings()" class="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1.5 text-xs w-1/6">
+                            <option value="">All Status</option>
+                            <option value="Confirmed">Confirmed</option><option value="False Positive">False Positive</option><option value="Auto-Detected">Auto-Detected</option>
+                        </select>
+                        <button onclick="exportFindings('csv')" class="bg-gray-600 text-white px-3 py-1.5 rounded text-xs">Export CSV</button>
+                        <button onclick="exportFindings('json')" class="bg-gray-600 text-white px-3 py-1.5 rounded text-xs">Export JSON</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-gray-800 text-gray-400 uppercase">
-                                <tr><th class="p-3">Severity</th><th class="p-3">Finding</th><th class="p-3">Target</th><th class="p-3">CVSS</th><th class="p-3">Status</th><th class="p-3">Actions</th></tr>
+                                <tr><th class="p-3">Severity</th><th class="p-3">Finding</th><th class="p-3">Target</th><th class="p-3">CVSS</th><th class="p-3">PoC</th><th class="p-3">Status</th><th class="p-3">Actions</th></tr>
                             </thead>
-                            <tbody id="findings-table-body" class="divide-y divide-gray-800"><tr><td colspan="6" class="p-4 text-center text-gray-500">Select project to view findings.</td></tr></tbody>
+                            <tbody id="findings-table-body" class="divide-y divide-gray-800"><tr><td colspan="7" class="p-4 text-center text-gray-500">Select project to view findings.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -312,7 +320,6 @@
                         <button onclick="loadAILearnings()" class="bg-accent text-black px-3 py-1.5 rounded text-xs">Fetch Latest Learnings</button>
                     </div>
                     <div id="learnings-output" class="bg-gray-800 p-3 rounded text-xs text-gray-400 max-h-48 overflow-y-auto">Click button to fetch AI learnings from past scans.</div>
-                    <!-- FEATURE 2: Apply Learnings Button -->
                     <button onclick="applyLearningsAsScan()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs mt-2">✅ Apply as Next Scan Plan</button>
                 </div>
                 <div class="bg-card rounded-xl border border-gray-800 p-4 mb-6">
@@ -514,7 +521,6 @@
             if (!document.getElementById('view-workflow').classList.contains('hidden')) loadTasks();
         }, 4000);
         
-        // Auto refresh Live Activity Feed every 4 seconds
         setInterval(() => {
             const pid = document.getElementById('feed-project-select').value;
             if(pid) loadActivityFeed(pid);
@@ -531,27 +537,28 @@
                 list.innerHTML += `
                     <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
                         <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h4 class="text-white font-medium text-sm">${p.name}</h4>
-                                <p class="text-xs text-gray-500 mt-1">${p.description || ''}</p>
+                            <div class="flex-1">
+                                <h4 class="text-white font-medium text-sm" id="proj-name-${p.id}">${p.name} ${p.status == 'Archived' ? '(Archived)' : ''}</h4>
+                                <p class="text-xs text-gray-500 mt-1" id="proj-desc-${p.id}">${p.description || ''}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="renameProject(${p.id})" class="text-gray-400 hover:text-white text-xs">✏️ Rename</button>
+                                <button onclick="archiveProject(${p.id})" class="text-yellow-500 hover:text-yellow-400 text-xs">Archive</button>
+                                <button onclick="deleteProject(${p.id}, '${p.name}')" class="text-red-500 hover:text-red-400 text-xs">Delete</button>
                             </div>
                         </div>
                         <div class="mb-4 pt-4 border-t border-gray-700">
                             <h5 class="text-xs text-gray-400 uppercase mb-2">Targets</h5>
                             <div class="flex space-x-2 mb-2">
                                 <input type="text" id="asset-name-${p.id}" placeholder="URL/IP" class="bg-gray-700 text-white rounded px-2 py-1 text-xs flex-1">
-                                <select id="asset-type-${p.id}" class="bg-gray-700 text-white rounded px-2 py-1 text-xs w-24">
-                                    <option value="domain">Domain</option>
-                                    <option value="url">URL</option>
-                                    <option value="ip">IP</option>
-                                </select>
+                                <select id="asset-type-${p.id}" class="bg-gray-700 text-white rounded px-2 py-1 text-xs w-24"><option value="domain">Domain</option><option value="url">URL</option><option value="ip">IP</option></select>
                                 <button onclick="addProjectAsset(${p.id})" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Add</button>
                             </div>
                             <div id="assets-list-${p.id}" class="space-y-1"></div>
                         </div>
                         <div class="pt-4 border-t border-gray-700">
                             <h5 class="text-xs text-gray-400 uppercase mb-2">Mission Context</h5>
-                            <textarea id="mission-context-${p.id}" rows="2" placeholder="Describe your target: e.g. Banking app, looking for IDOR and auth bypass. Login at /auth, API at /api/v2/..." class="bg-gray-700 text-white rounded p-2 text-xs w-full mb-2"></textarea>
+                            <textarea id="mission-context-${p.id}" rows="2" placeholder="Describe target..." class="bg-gray-700 text-white rounded p-2 text-xs w-full mb-2"></textarea>
                             <button onclick="generateSmartPlan(${p.id})" class="bg-accent text-black px-3 py-1.5 rounded text-xs font-bold w-full">Generate Smart Plan</button>
                         </div>
                     </div>
@@ -559,6 +566,26 @@
                 loadProjectAssets(p.id);
                 selects.forEach(id => { document.getElementById(id).innerHTML += `<option value="${p.id}">${p.name}</option>`; });
             });
+        }
+
+        async function renameProject(pid) {
+            const newName = prompt("Enter new project name:", document.getElementById(`proj-name-${pid}`).innerText.split(' ')[0]);
+            if(!newName) return;
+            await apiFetch(`/api/projects/${pid}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name: newName}) });
+            loadProjects();
+        }
+
+        async function archiveProject(pid) {
+            if(!confirm('Archive this project? It will be hidden from active scans but data remains.')) return;
+            await apiFetch(`/api/projects/${pid}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status: 'Archived'}) });
+            loadProjects();
+        }
+
+        async function deleteProject(pid, pname) {
+            const conf = prompt(`To delete this project and ALL its data, type the project name exactly: ${pname}`);
+            if(conf !== pname) { alert('Project name did not match. Delete cancelled.'); return; }
+            await apiFetch(`/api/projects/${pid}`, { method: 'DELETE' });
+            loadProjects(); loadSystemHealth();
         }
 
         document.getElementById('project-form').addEventListener('submit', async (e) => {
@@ -582,10 +609,7 @@
                 const res = await apiFetch(`/api/assets/${pid}`);
                 const assets = await res.json();
                 const list = document.getElementById(`assets-list-${pid}`);
-                if(assets.length === 0) {
-                    list.innerHTML = '<p class="text-gray-500 text-xs">No targets added yet.</p>';
-                    return;
-                }
+                if(assets.length === 0) { list.innerHTML = '<p class="text-gray-500 text-xs">No targets added yet.</p>'; return; }
                 list.innerHTML = assets.map(a => `
                     <div class="flex items-center justify-between bg-gray-700 p-2 rounded text-xs">
                         <span class="text-gray-300 truncate flex-1">${a.name}</span>
@@ -679,7 +703,6 @@
             loadTasks();
         }
 
-        // FEATURE 3: Bug Bounty Mode Selector
         function updateBountyMode() {
             const mode = document.getElementById('bounty-mode').value;
             const targetInput = document.getElementById('exec-target-input');
@@ -705,8 +728,13 @@
             out.innerText = ''; out.className = "text-green-400 text-xs whitespace-pre-wrap font-mono";
             document.getElementById('btn-exec').classList.add('hidden');
             document.getElementById('btn-stop').classList.remove('hidden');
+            
             ws = new WebSocket(`ws://${window.location.host}/ws/terminal`);
-            ws.onopen = () => { ws.send(JSON.stringify({project_id: parseInt(pid), target, tool})); };
+            
+            ws.onopen = () => { 
+                ws.send(JSON.stringify({token: authToken})); // Send Auth first
+                ws.send(JSON.stringify({project_id: parseInt(pid), target, tool})); 
+            };
             ws.onmessage = (event) => { out.innerText += event.data + '\n'; out.scrollTop = out.scrollHeight; };
             ws.onerror = () => { out.innerText += "\n[Error] Connection lost."; out.className = "text-red-400 text-xs whitespace-pre-wrap font-mono"; };
             ws.onclose = () => {
@@ -735,76 +763,80 @@
                     apiFetch(`/api/agent_messages/${pid}`).then(r=>r.json()),
                     apiFetch(`/api/logs/${pid}`).then(r=>r.json())
                 ]);
-                
                 const feed = [
                     ...msgs.map(m => ({ time: m.timestamp, sender: m.sender_agent, receiver: m.receiver_agent, content: m.content, type: 'message' })),
                     ...logs.map(l => ({ time: l.timestamp, sender: l.agent_name, receiver: null, content: l.decision + (l.output_data ? `: ${l.output_data.slice(0,60)}` : ''), type: 'log', status: l.result_status }))
                 ].sort((a,b) => new Date(a.time) - new Date(b.time));
-                
-                const agentColors = {
-                    'Orchestrator': 'text-cyan-400',
-                    'ReconAgent': 'text-blue-400',
-                    'ScannerAgent': 'text-red-400',
-                    'ValidatorAgent': 'text-green-400',
-                    'LearningAgent': 'text-purple-400',
-                    'ReportingAgent': 'text-yellow-400',
-                    'CouncilAgent': 'text-orange-400',
-                };
-                
+                const agentColors = { 'Orchestrator': 'text-cyan-400', 'ReconAgent': 'text-blue-400', 'ScannerAgent': 'text-red-400', 'ValidatorAgent': 'text-green-400', 'LearningAgent': 'text-purple-400', 'ReportingAgent': 'text-yellow-400', 'CouncilAgent': 'text-orange-400' };
                 const container = document.getElementById('activity-feed');
                 container.innerHTML = feed.slice(-30).map(item => {
                     const color = agentColors[item.sender] || 'text-gray-400';
                     const icon = item.type === 'message' ? '💬' : '⚡';
                     const timeStr = new Date(item.time).toLocaleTimeString();
                     const receiver = item.receiver ? ` → ${item.receiver}` : '';
-                    return `
-                        <div class="flex items-start space-x-2 text-xs mb-2 p-2 bg-gray-800 rounded">
-                            <span class="text-lg">${icon}</span>
-                            <div class="flex-1">
-                                <div class="flex justify-between mb-1">
-                                    <span class="${color} font-bold">${item.sender}${receiver}</span>
-                                    <span class="text-gray-500">${timeStr}</span>
-                                </div>
-                                <div class="text-gray-300 break-words">${item.content}</div>
-                            </div>
-                        </div>
-                    `;
+                    return `<div class="flex items-start space-x-2 text-xs mb-2 p-2 bg-gray-800 rounded"><span class="text-lg">${icon}</span><div class="flex-1"><div class="flex justify-between mb-1"><span class="${color} font-bold">${item.sender}${receiver}</span><span class="text-gray-500">${timeStr}</span></div><div class="text-gray-300 break-words">${item.content}</div></div></div>`;
                 }).join('');
                 container.scrollTop = container.scrollHeight;
             } catch(e) {}
         }
 
-        document.getElementById('findings-project-select').addEventListener('change', async (e) => {
-            if(!e.target.value) return; const res = await apiFetch(`/api/findings/${e.target.value}`); const findings = await res.json();
-            const tbody = document.getElementById('findings-table-body');
-            if(findings.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No findings extracted yet.</td></tr>'; return; }
-            tbody.innerHTML = findings.map(f => {
-                let sevColor = 'bg-gray-700 text-gray-300'; 
-                if(f.severity === 'Critical') sevColor = 'bg-red-900 text-red-300'; 
-                else if(f.severity === 'High') sevColor = 'bg-orange-900 text-orange-300'; 
-                else if(f.severity === 'Medium') sevColor = 'bg-yellow-900 text-yellow-300';
-                let statusColor = 'text-gray-400'; 
-                if(f.status === 'Confirmed') statusColor = 'text-green-400 font-bold'; 
-                else if(f.status === 'False Positive') statusColor = 'text-red-400 line-through';
-                let cvssVal = f.cvss_score || 0.0;
-                let cvssColor = 'bg-blue-900 text-blue-300';
-                if(cvssVal >= 9.0) cvssColor = 'bg-red-900 text-red-300';
-                else if(cvssVal >= 7.0) cvssColor = 'bg-orange-900 text-orange-300';
-                else if(cvssVal >= 4.0) cvssColor = 'bg-yellow-900 text-yellow-300';
-                return `<tr class="hover:bg-gray-800">
-                    <td class="p-3"><span class="px-2 py-1 rounded ${sevColor}">${f.severity}</span></td>
-                    <td class="p-3 text-white">${f.title}</td>
-                    <td class="p-3 text-gray-400">${f.target}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded ${cvssColor}">${cvssVal.toFixed(1)}</span></td>
-                    <td class="p-3 ${statusColor}">${f.status}</td>
-                    <td class="p-3 flex space-x-1">
-                        <button onclick="validateFindingAI(${f.id})" class="bg-accent text-black px-2 py-1 rounded text-xs">AI Check</button>
-                        <button onclick="runCouncilReview(${f.id})" class="bg-purple-600 text-white px-2 py-1 rounded text-xs">Council</button>
-                        <button onclick="updateFindingStatus(${f.id}, 'Confirmed')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Confirm</button>
-                    </td>
-                </tr>`;
-            }).join('');
-        });
+        async function loadFindings() {
+            const pid = document.getElementById('findings-project-select').value;
+            if(!pid) return;
+            const sev = document.getElementById('filter-severity').value;
+            const stat = document.getElementById('filter-status').value;
+            try {
+                const res = await apiFetch(`/api/findings/${pid}?severity=${sev}&status=${stat}&limit=100`);
+                const data = await res.json();
+                const findings = data.findings || [];
+                const tbody = document.getElementById('findings-table-body');
+                if(findings.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-500">No findings found.</td></tr>'; return; }
+                tbody.innerHTML = findings.map(f => {
+                    let sevColor = 'bg-gray-700 text-gray-300'; 
+                    if(f.severity === 'Critical') sevColor = 'bg-red-900 text-red-300'; 
+                    else if(f.severity === 'High') sevColor = 'bg-orange-900 text-orange-300'; 
+                    else if(f.severity === 'Medium') sevColor = 'bg-yellow-900 text-yellow-300';
+                    let statusColor = 'text-gray-400'; 
+                    if(f.status === 'Confirmed') statusColor = 'text-green-400 font-bold'; 
+                    else if(f.status === 'False Positive') statusColor = 'text-red-400 line-through';
+                    let cvssVal = f.cvss_score || 0.0;
+                    let cvssColor = 'bg-blue-900 text-blue-300';
+                    if(cvssVal >= 9.0) cvssColor = 'bg-red-900 text-red-300';
+                    else if(cvssVal >= 7.0) cvssColor = 'bg-orange-900 text-orange-300';
+                    else if(cvssVal >= 4.0) cvssColor = 'bg-yellow-900 text-yellow-300';
+                    let pocBadge = f.poc_verified ? '<span class="px-1 py-0.5 bg-green-700 text-green-200 rounded text-[10px]">Yes</span>' : '<span class="px-1 py-0.5 bg-gray-700 text-gray-300 rounded text-[10px]">No</span>';
+                    return `<tr class="hover:bg-gray-800">
+                        <td class="p-3"><span class="px-2 py-1 rounded ${sevColor}">${f.severity}</span></td>
+                        <td class="p-3 text-white">${f.title}</td>
+                        <td class="p-3 text-gray-400">${f.target}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded ${cvssColor}">${cvssVal.toFixed(1)}</span></td>
+                        <td class="p-3">${pocBadge}</td>
+                        <td class="p-3 ${statusColor}">${f.status}</td>
+                        <td class="p-3 flex space-x-1">
+                            <button onclick="validateFindingAI(${f.id})" class="bg-accent text-black px-2 py-1 rounded text-xs">AI Check</button>
+                            <button onclick="verifyPoC(${f.id})" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs">Verify PoC</button>
+                            <button onclick="runCouncilReview(${f.id})" class="bg-purple-600 text-white px-2 py-1 rounded text-xs">Council</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function exportFindings(format) {
+            const pid = document.getElementById('findings-project-select').value;
+            if(!pid) return alert('Select project first');
+            window.open(`/api/findings/export/${pid}?format=${format}`, '_blank');
+        }
+
+        async function verifyPoC(id) {
+            alert("Attempting safe PoC verification...");
+            try {
+                const res = await apiFetch(`/api/verify-poc/${id}`, { method: 'POST' });
+                const data = await res.json();
+                alert(`Verification complete. Verified: ${data.verified}`);
+                loadFindings();
+            } catch(e) { alert("Error verifying PoC."); }
+        }
 
         async function downloadPDF() {
             const pid = document.getElementById('findings-project-select').value;
@@ -847,20 +879,10 @@
             try {
                 const res = await apiFetch(`/api/findings/quality-gate/${pid}`);
                 const data = await res.json();
-                out.innerHTML = `
-                    <div class="grid grid-cols-3 gap-4 mt-2">
-                        <div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Findings:</span> ${data.findings_detected}</div>
-                        <div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Confirmed:</span> ${data.confirmed_count}</div>
-                        <div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">False Positives:</span> ${data.false_positive_count}</div>
-                        <div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Avg Confidence:</span> ${data.avg_confidence.toFixed(2)}%</div>
-                        <div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">All Have Evidence:</span> ${data.all_have_evidence}</div>
-                        <div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Gate Passed:</span> <span class="${data.gate_passed ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}">${data.gate_passed}</span></div>
-                    </div>
-                `;
+                out.innerHTML = `<div class="grid grid-cols-3 gap-4 mt-2"><div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Findings:</span> ${data.findings_detected}</div><div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Confirmed:</span> ${data.confirmed_count}</div><div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">False Positives:</span> ${data.false_positive_count}</div><div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Avg Confidence:</span> ${data.avg_confidence.toFixed(2)}%</div><div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">All Have Evidence:</span> ${data.all_have_evidence}</div><div class="bg-gray-800 p-2 rounded"><span class="text-gray-400">Gate Passed:</span> <span class="${data.gate_passed ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}">${data.gate_passed}</span></div></div>`;
             } catch(e) { out.innerText = "Error checking quality gate."; }
         }
 
-        // FEATURE 1: Validate All Findings JS
         async function validateAll() {
             const pid = document.getElementById('findings-project-select').value;
             if(!pid) return alert('Select project');
@@ -870,7 +892,7 @@
             const data = await res.json();
             alert(`Done! Confirmed: ${data.confirmed}, FP removed: ${data.fp_removed}`);
             btn.innerText = "🔍 Validate All"; btn.disabled = false;
-            document.getElementById('findings-project-select').dispatchEvent(new Event('change'));
+            loadFindings();
         }
 
         async function loadAgentMessages() {
@@ -881,25 +903,11 @@
             try {
                 const res = await apiFetch(`/api/agent_messages/${pid}`);
                 const msgs = await res.json();
-                if(msgs.length === 0) {
-                    out.innerHTML = '<p class="text-gray-500">No messages yet. Run an autonomous scan.</p>';
-                    return;
-                }
-                out.innerHTML = msgs.map(m => `
-                    <div class="bg-gray-800 p-2 rounded">
-                        <div class="flex justify-between mb-1">
-                            <span class="text-accent font-bold">${m.sender_agent} → ${m.receiver_agent}</span>
-                            <span class="text-gray-500">${m.message_type}</span>
-                        </div>
-                        <p class="text-gray-300">${m.content}</p>
-                    </div>
-                `).join('');
-            } catch(e) {
-                out.innerHTML = '<p class="text-red-400">Error fetching messages.</p>';
-            }
+                if(msgs.length === 0) { out.innerHTML = '<p class="text-gray-500">No messages yet. Run an autonomous scan.</p>'; return; }
+                out.innerHTML = msgs.map(m => `<div class="bg-gray-800 p-2 rounded"><div class="flex justify-between mb-1"><span class="text-accent font-bold">${m.sender_agent} → ${m.receiver_agent}</span><span class="text-gray-500">${m.message_type}</span></div><p class="text-gray-300">${m.content}</p></div>`).join('');
+            } catch(e) { out.innerHTML = '<p class="text-red-400">Error fetching messages.</p>'; }
         }
 
-        // FEATURE 4: AI Learnings fix
         async function loadAILearnings() {
             const pid = document.getElementById('agent-msg-project-select').value;
             if(!pid) { alert('Select project first'); return; }
@@ -908,42 +916,24 @@
             try {
                 const res = await apiFetch(`/api/ai/learnings/${pid}`);
                 const data = await res.json();
-                if(data.status === 'no_learnings') {
-                    out.innerText = data.message;
-                } else {
-                    out.innerText = JSON.stringify(data, null, 2);
-                }
+                if(data.status === 'no_learnings') { out.innerText = data.message; } else { out.innerText = JSON.stringify(data, null, 2); }
             } catch(e) { out.innerText = "Error fetching learnings."; }
         }
 
-        // FEATURE 2: Apply Learnings JS
         async function applyLearningsAsScan() {
             const pid = document.getElementById('exec-project-select').value;
             if(!pid) { alert('Go to Command Center and select project first'); return; }
             if(!confirm('Start autonomous scan using AI recommended tools?')) return;
-            
             const res = await apiFetch(`/api/ai/learnings/${pid}`);
             const data = await res.json();
             const tools = data.next_scan_priority || data.recommended_next_tools || [];
-            
-            if(tools.length === 0) {
-                alert('No recommendations yet. Run a full scan first.');
-                return;
-            }
-            
-            // Get first asset as target
+            if(tools.length === 0) { alert('No recommendations yet. Run a full scan first.'); return; }
             const assets = await (await apiFetch(`/api/assets/${pid}`)).json();
             if(!assets.length) { alert('Add a target URL first'); return; }
             const target = assets[0].name;
-            
             await apiFetch(`/api/execute/autonomous/${pid}?target=${target}`, {method:'POST'});
             alert(`Scan started! Tools: ${tools.join(', ')}`);
             showView('tools');
-        }
-
-        async function updateFindingStatus(id, status) {
-            await apiFetch(`/api/findings/${id}?status=${status}`, { method: 'PUT' });
-            document.getElementById('findings-project-select').dispatchEvent(new Event('change'));
         }
 
         async function validateFindingAI(id) {
@@ -964,31 +954,9 @@
                 if(data.council_verdict === 'EXPLOIT') verdictColor = 'text-red-500';
                 else if(data.council_verdict === 'PATCH_SOON') verdictColor = 'text-orange-500';
                 else if(data.council_verdict === 'CLOSE') verdictColor = 'text-green-500';
-                let html = `
-                    <div class="space-y-3 text-white">
-                        <div class="bg-red-900/50 p-3 rounded border border-red-700">
-                            <h4 class="text-red-400 font-bold mb-1">🔴 Red Team (Attacker)</h4>
-                            <p class="text-xs text-gray-300">${data.red_team || 'N/A'}</p>
-                        </div>
-                        <div class="bg-blue-900/50 p-3 rounded border border-blue-700">
-                            <h4 class="text-blue-400 font-bold mb-1">🔵 Blue Team (Defender)</h4>
-                            <p class="text-xs text-gray-300">${data.blue_team || 'N/A'}</p>
-                        </div>
-                        <div class="bg-green-900/50 p-3 rounded border border-green-700">
-                            <h4 class="text-green-400 font-bold mb-1">💼 Business Impact</h4>
-                            <p class="text-xs text-gray-300">${data.business || 'N/A'}</p>
-                        </div>
-                        <div class="bg-gray-700 p-3 rounded text-center mt-4">
-                            <span class="text-lg font-bold ${verdictColor}">
-                                Council Verdict: ${data.council_verdict || 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                `;
+                let html = `<div class="space-y-3 text-white"><div class="bg-red-900/50 p-3 rounded border border-red-700"><h4 class="text-red-400 font-bold mb-1">🔴 Red Team (Attacker)</h4><p class="text-xs text-gray-300">${data.red_team || 'N/A'}</p></div><div class="bg-blue-900/50 p-3 rounded border border-blue-700"><h4 class="text-blue-400 font-bold mb-1">🔵 Blue Team (Defender)</h4><p class="text-xs text-gray-300">${data.blue_team || 'N/A'}</p></div><div class="bg-green-900/50 p-3 rounded border border-green-700"><h4 class="text-green-400 font-bold mb-1">💼 Business Impact</h4><p class="text-xs text-gray-300">${data.business || 'N/A'}</p></div><div class="bg-gray-700 p-3 rounded text-center mt-4"><span class="text-lg font-bold ${verdictColor}">Council Verdict: ${data.council_verdict || 'N/A'}</span></div></div>`;
                 document.getElementById('ai-output').innerHTML = html;
-            } catch(e) { 
-                document.getElementById('ai-output').innerText = "Error running council review."; 
-            }
+            } catch(e) { document.getElementById('ai-output').innerText = "Error running council review."; }
         }
 
         async function loadIntelMap() {
@@ -1015,11 +983,7 @@
             if(!target) return alert('Enter target URL');
             const out = document.getElementById('wordlist-output');
             out.innerText = "AI is analyzing target and generating wordlist...";
-            try {
-                const res = await apiFetch(`/api/ai/wordlist/${target}`);
-                const data = await res.json();
-                out.innerText = data.wordlist.join('\n');
-            } catch(e) { out.innerText = "Error generating wordlist."; }
+            try { const res = await apiFetch(`/api/ai/wordlist/${target}`); const data = await res.json(); out.innerText = data.wordlist.join('\n'); } catch(e) { out.innerText = "Error generating wordlist."; }
         }
 
         async function runBrowserIntel() {

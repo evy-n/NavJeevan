@@ -13,23 +13,26 @@ class BaseAgent(ABC):
     def __init__(self):
         self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     
-    def think(self, prompt: str, system_prompt: str = None) -> str:
-        """Groq se response lo"""
+    # P2.9: Added json_mode parameter
+    def think(self, prompt: str, system_prompt: str = None, json_mode: bool = False) -> str:
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
         
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=1000
-        )
+        kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0.1,
+            "max_tokens": 1000
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        
+        response = self.client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
     
     def log_action(self, db, project_id: int, action: str, result: str):
-        """Har agent action DB mein log karo"""
         entry = DecisionLog(
             project_id=project_id,
             agent_name=self.name,
@@ -43,7 +46,6 @@ class BaseAgent(ABC):
         db.commit()
     
     def send_message(self, db, project_id: int, to_agent: str, message: str):
-        """Agent-to-agent communication log karo"""
         msg = AgentMessage(
             project_id=project_id,
             sender_agent=self.name,
