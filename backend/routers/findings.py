@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["Findings & Logs"])
 def get_decision_logs(project_id: int, db: Session = Depends(get_db)):
     return db.query(DecisionLog).filter(DecisionLog.project_id == project_id).all()
 
-# FEATURE 4a: Findings pagination + filter
+# FIX 4: Added user dependency
 @router.get("/findings/{project_id}")
 def get_findings(
     project_id: int, 
@@ -23,7 +23,8 @@ def get_findings(
     tool: str = None, 
     limit: int = 100, 
     offset: int = 0,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user) 
 ):
     query = db.query(Finding).filter(Finding.project_id == project_id)
     if severity: query = query.filter(Finding.severity == severity)
@@ -34,9 +35,14 @@ def get_findings(
     findings = query.offset(offset).limit(limit).all()
     return {"total": total, "findings": findings}
 
-# FEATURE 4b: Export findings
+# FIX 4: Added user dependency
 @router.get("/findings/export/{project_id}")
-def export_findings(project_id: int, format: str = "csv", db: Session = Depends(get_db)):
+def export_findings(
+    project_id: int, 
+    format: str = "csv", 
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user)
+):
     findings = db.query(Finding).filter(Finding.project_id == project_id).all()
     
     if format == "json":

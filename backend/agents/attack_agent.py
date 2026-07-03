@@ -1,6 +1,7 @@
 from agents.base_agent import BaseAgent
 from models import Finding, Evidence
 import asyncio
+from typing import Optional
 
 class AttackAgent(BaseAgent):
     name = "AttackAgent"
@@ -14,10 +15,22 @@ class AttackAgent(BaseAgent):
     
     def execute(self, project_id: int, target: str, context: dict) -> dict:
         db = context.get("db")
-        findings = db.query(Finding).filter(
-            Finding.project_id == project_id,
-            Finding.status == "Confirmed"
-        ).all()
+        
+        # Support single finding verification via context
+        single_finding_id = context.get("single_finding_id")
+        
+        if single_finding_id:
+            # Only query the specific finding if ID is provided
+            findings = db.query(Finding).filter(
+                Finding.id == single_finding_id,
+                Finding.status == "Confirmed"
+            ).all()
+        else:
+            # Default behavior: query all Confirmed findings for the project
+            findings = db.query(Finding).filter(
+                Finding.project_id == project_id,
+                Finding.status == "Confirmed"
+            ).all()
         
         verified_count = 0
         for finding in findings:
@@ -26,7 +39,6 @@ class AttackAgent(BaseAgent):
             
             # Safe, non-destructive verification logic
             if finding.tool == "dalfox" or "XSS" in finding.title:
-                # Just re-run dalfox to confirm reflection without payloads
                 from core.plugin_manager import plugin_manager
                 plugin = plugin_manager.get_plugin("dalfox")
                 if plugin:
@@ -34,9 +46,13 @@ class AttackAgent(BaseAgent):
                     asyncio.set_event_loop(loop)
                     result = loop.run_until_complete(plugin.execute(finding.target))
                     loop.close()
-                    if "verified" in result.get("output", "").lower():
+                    
+                    # Heuristic check for Dalfox output
+                    # NOTE: This is a heuristic approach. Dalfox prints output only when it finds something.
+                    # If Dalfox supports '--format json' in the future, use that for structured parsing.
+                    if result.get("status") == "Completed" and result.get("output", "").strip():
                         is_verified = True
-                        notes = "Reflection confirmed safely"
+                        notes = f"Dalfox re-scan output: {result.get('output', '')[:100]}"
                         
             elif finding.tool == "ffuf" or "Hidden" in finding.title:
                 # Just check HTTP status code via httpx
@@ -47,7 +63,9 @@ class AttackAgent(BaseAgent):
                     asyncio.set_event_loop(loop)
                     result = loop.run_until_complete(plugin.execute(finding.target))
                     loop.close()
-                    if "200" in result.get("output", ""):
+                    
+                    # FIX 2: Precise check for httpx status code format [200]
+                    if "[200]" in result.get("output", ""):
                         is_verified = True
                         notes = "Endpoint accessible (200 OK)"
                         

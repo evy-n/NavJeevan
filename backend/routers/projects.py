@@ -9,9 +9,11 @@ from core.dependencies import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Projects & Tasks"])
 
+# FIX 3: Added status field
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    status: Optional[str] = None
 
 @router.post("/projects/", response_model=schemas.ProjectResponse)
 def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
@@ -23,7 +25,6 @@ def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)
 def get_projects(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     return db.query(models.Project).all()
 
-# FEATURE 1: Project Rename
 @router.patch("/projects/{project_id}", response_model=schemas.ProjectResponse)
 def rename_project(project_id: int, data: ProjectUpdate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
@@ -31,21 +32,19 @@ def rename_project(project_id: int, data: ProjectUpdate, db: Session = Depends(g
     
     if data.name: project.name = data.name
     if data.description is not None: project.description = data.description
+    # FIX 3: Handle status update for Archive functionality
+    if data.status: project.status = data.status
     db.commit(); db.refresh(project)
     return project
 
-# FEATURE 2: Project Delete with Cascade
 @router.delete("/projects/{project_id}")
 def delete_project(project_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project: raise HTTPException(status_code=404, detail="Project not found")
-    
-    # SQLAlchemy cascade="all, delete-orphan" will handle related tables automatically
     db.delete(project)
     db.commit()
     return {"status": "success", "message": "Project and all related data deleted"}
 
-# Asset Endpoints
 class AssetCreate(BaseModel):
     project_id: int
     name: str
@@ -85,7 +84,6 @@ async def import_csv(project_id: int, file: UploadFile = File(...), db: Session 
     db.commit()
     return {"status": "success", "message": f"Imported {count} targets"}
 
-# Task Endpoints
 class TaskStatusUpdate(BaseModel):
     status: str
 

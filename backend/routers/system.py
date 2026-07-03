@@ -12,12 +12,13 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api", tags=["System"])
 
-# FEATURE 1: Real Agent Network Mapping
+# FIX 2: AttackAgent added between Validator and Learning
 REAL_AGENTS = [
   {"name":"Orchestrator","role":"Pipeline Coordinator - Controls all agents"},
   {"name":"ReconAgent","role":"Recon: subfinder, httpx, gau, katana"},
   {"name":"ScannerAgent","role":"Vuln Scanner: nuclei, nmap, dalfox, ffuf"},
   {"name":"ValidatorAgent","role":"False Positive Remover - OWASP + CVSS"},
+  {"name":"AttackAgent","role":"PoC Verification: Safe re-verification of confirmed findings"},
   {"name":"LearningAgent","role":"Pattern Recognition - saves scan learnings"},
   {"name":"ReportingAgent","role":"PDF + AI Executive Summary Generator"},
   {"name":"CouncilAgent","role":"3-Perspective Reviewer: Red/Blue/Business"},
@@ -40,7 +41,7 @@ def get_agent_status(db):
             if last.result_status == "Failed":
                 status = "Error"
             elif last.result_status == "Completed" or last.result_status == "Running":
-                status = "Standby" # Stby because it's done running
+                status = "Standby" 
             
         if agent["name"] == "Orchestrator":
             status = "Active"

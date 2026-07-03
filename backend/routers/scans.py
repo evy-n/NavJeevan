@@ -13,13 +13,18 @@ from plugins.base import ACTIVE_PROCESSES
 
 router = APIRouter(tags=["Scans & Execution"])
 
-# FEATURE 4d: In-memory Rate Limiting
+# In-memory Rate Limiting
 scan_rate_limits = {}
 
 def check_rate_limit(project_id: int):
-    if project_id in scan_rate_limits and (time.time() - scan_rate_limits[project_id] < 60):
+    current_time = time.time()
+    keys_to_delete = [k for k, v in scan_rate_limits.items() if current_time - v > 300]
+    for k in keys_to_delete:
+        del scan_rate_limits[k]
+        
+    if project_id in scan_rate_limits and (current_time - scan_rate_limits[project_id] < 60):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait 60 seconds before starting another scan on this project.")
-    scan_rate_limits[project_id] = time.time()
+    scan_rate_limits[project_id] = current_time
 
 @router.post("/api/execute/scan/{project_id}")
 async def execute_scan(project_id: int, target: str, tool: str, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
@@ -52,15 +57,18 @@ def execute_autonomous_scan(project_id: int, target: str, background_tasks: Back
     background_tasks.add_task(autonomous_worker, project_id, target)
     return {"status": "success", "message": "Autonomous State Machine Started."}
 
-# FEATURE 3: Manual PoC Verification Endpoint
+# FIX 1: Added check_rate_limit to verify_poc endpoint
 @router.post("/api/verify-poc/{finding_id}")
 def verify_poc(finding_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     finding = db.query(models.Finding).filter(models.Finding.id == finding_id).first()
     if not finding: raise HTTPException(status_code=404, detail="Finding not found")
     
+    # Apply rate limit based on the project ID associated with the finding
+    check_rate_limit(finding.project_id)
+    
     from agents.attack_agent import AttackAgent
     agent = AttackAgent()
-    context = {"db": db}
+    context = {"db": db, "single_finding_id": finding_id}
     result = agent.execute(finding.project_id, finding.target, context)
     return result
 
